@@ -41,7 +41,9 @@ MAX_RETRIES = 3
 CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "llm_cache"
 
 # Đổi số này mỗi khi sửa prompt, để cache cũ không bị dùng nhầm cho prompt mới.
-PROMPT_VERSION = "v4"
+# v6: them `preconditions` vao schema va luat tham so phai la gia tri cu the. Bo
+# qua ten v5 vi ten do da dung cho goi prompt bi loai o phase 3.
+PROMPT_VERSION = "v6"
 
 
 @dataclass(frozen=True)

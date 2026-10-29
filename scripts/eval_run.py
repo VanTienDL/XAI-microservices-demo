@@ -50,6 +50,7 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 from src_thesis.eval import metrics as M
 from src_thesis.eval.runner import (
+    DEFAULT_BASELINE_REPEATS,
     DEFAULT_MODES,
     DEFAULT_SCENARIOS,
     EVAL_DIR,
@@ -101,6 +102,19 @@ def print_summary(run_id: str) -> int:
             print(f"           khong ket luan duoc: {s['unknown_effect_total']} "
                   f"hanh dong thieu luu luong")
         print(f"  bi twin chan        : {s['rejected_by_twin_total']}")
+        if s.get("twin_better_total"):
+            rate = s.get("twin_transfer_rate")
+            print(f"  chuyen giao twin->prod: "
+                  f"{rate * 100:.0f}% tren {s['twin_better_total']} lan twin noi better")
+        if s.get("drift_checks_total"):
+            rate = s.get("drift_failure_rate") or 0.0
+            print(f"  that bai do do lech : {rate * 100:.0f}% tren "
+                  f"{s['drift_checks_total']} lan doi sanh "
+                  f"(lech cau hinh {s.get('blocked_by_drift_total', 0)}, "
+                  f"tu khoe truoc khi ap {s.get('blocked_recovered_total', 0)})")
+        if s.get("blocked_by_precondition_total") or s.get("auto_undo_total"):
+            print(f"  chan vi dieu kien   : {s.get('blocked_by_precondition_total', 0)}"
+                  f"   tu hoan tac: {s.get('auto_undo_total', 0)}")
         print(f"  chi so 6 token/ca    : {s['tokens_per_case']:.0f}", end="")
         if s.get("cost_per_case") is not None:
             print(f"   tien/ca: ${s['cost_per_case']:.5f}")
@@ -127,6 +141,9 @@ def main() -> int:
     ap.add_argument("--scenarios", default=",".join(DEFAULT_SCENARIOS))
     ap.add_argument("--repeats", type=int, default=5,
                     help="so lan moi kich ban; muc 8 KLTN.md doi toi thieu 5")
+    ap.add_argument("--baseline-repeats", type=int, default=DEFAULT_BASELINE_REPEATS,
+                    help="so lan cho rieng che do baseline (khong goi LLM, gan nhu "
+                         "tat dinh); dat bang --repeats neu muon chay du")
     ap.add_argument("--limit", type=int, default=None,
                     help="chay toi da bao nhieu ca roi dung, de uoc luong thoi gian")
     ap.add_argument("--resume", default=None,
@@ -146,6 +163,9 @@ def main() -> int:
     ap.add_argument("--baseline-file", default=None,
                     help="ghim mot file anh nen cho moi buoi, thay vi chup nen moi "
                          "moi buoi; dung khi may khong khoi dong lai giua cac buoi")
+    ap.add_argument("--allow-code-change", action="store_true",
+                    help="cho resume du code/prompt/model da doi so voi luc mo phien; "
+                         "mac dinh tu choi vi hai nua phien do bang hai thuoc khac nhau")
     ap.add_argument("--dry-run", action="store_true",
                     help="khong tiem loi, khong sua gi, khong cho — nhung VAN doc "
                          "cluster va VAN goi LLM that, tuc la van ton tien API")
@@ -172,6 +192,8 @@ def main() -> int:
         dry_run=args.dry_run,
         baseline_give_up_s=args.baseline_give_up,
         baseline_file=args.baseline_file,
+        baseline_repeats=args.baseline_repeats,
+        allow_code_change=args.allow_code_change,
     )
 
     code = runner.run_all(limit=args.limit, budget_minutes=args.budget_minutes)

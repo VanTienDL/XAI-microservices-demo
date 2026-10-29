@@ -260,15 +260,20 @@ def classify_action_effect(
         pb, pa = b.get("p95_ms", 0.0), a.get("p95_ms", 0.0)
         ratio = ((pa - pb) / pb) if pb > 0 else 0.0
 
+        # Ti le loi xet TRUOC, ca hai chieu, roi moi toi do tre — cung thu tu voi
+        # `TwinVerifier.compare`. Ban dau xet "p95 tang" truoc "loi giam", va do sai
+        # that o S2: service chet thi request bao loi NGAY nen p95 thap gia tao; sua
+        # xong thi p95 ve muc that. Ca hai ca S2 bi cham `harmful` ("frontend p95
+        # tang 1169%") cho mot hanh dong chua dung benh, trong khi `watch` noi better.
         if de >= HARMFUL_ERROR_DELTA:
             degraded.append(svc)
             notes.append(f"{svc} loi tang {de * 100:.1f} diem")
-        elif ratio >= HARMFUL_P95_RATIO:
-            degraded.append(svc)
-            notes.append(f"{svc} p95 tang {ratio * 100:.0f}%")
         elif -de >= HARMFUL_ERROR_DELTA:
             improved.append(svc)
             notes.append(f"{svc} loi giam {-de * 100:.1f} diem")
+        elif ratio >= HARMFUL_P95_RATIO:
+            degraded.append(svc)
+            notes.append(f"{svc} p95 tang {ratio * 100:.0f}%")
         elif ratio <= -HARMFUL_P95_RATIO:
             improved.append(svc)
             notes.append(f"{svc} p95 giam {-ratio * 100:.0f}%")
@@ -358,6 +363,17 @@ class CaseOutcome:
     took_s: float = 0.0
     actions_rejected_by_twin: int = 0
 
+    # co che kiem soat do lech trang thai — chi khac 0 o che do bat `guards`
+    blocked_by_precondition: int = 0
+    drift_checks: int = 0
+    blocked_by_drift: int = 0
+    blocked_recovered: int = 0
+    auto_undos: int = 0
+    # chuyen giao twin -> production: so lan twin phan `better`, va trong do bao
+    # nhieu lan production DO DUOC cung `better` sau khi ap
+    twin_better: int = 0
+    twin_better_transferred: int = 0
+
     notes: list = None
 
     def __post_init__(self) -> None:
@@ -391,6 +407,21 @@ class ModeSummary:
     tokens_per_case: float
     cost_per_case: float | None
     took_mean_s: float
+    # co che kiem soat do lech trang thai
+    blocked_by_precondition_total: int = 0
+    auto_undo_total: int = 0
+    drift_checks_total: int = 0
+    blocked_by_drift_total: int = 0
+    blocked_recovered_total: int = 0
+    # Ti le that bai do do lech trang thai (Bang 3 de cuong): so lan bi chan vi
+    # lech CAU HINH hoac lech SUC KHOE, chia cho so lan doi sanh. None khi chua
+    # doi sanh lan nao — khac voi 0.
+    drift_failure_rate: float | None = None
+    # Ti le chuyen giao twin -> production: trong cac lan twin phan `better`, bao
+    # nhieu lan production do duoc cung `better`. Lan bi chan o buoc ap tinh la
+    # chuyen giao that bai. None khi twin chua phan `better` lan nao.
+    twin_better_total: int = 0
+    twin_transfer_rate: float | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -417,6 +448,10 @@ def summarize_mode(outcomes: list, mode: str = "") -> ModeSummary:
           if o.propagation_jaccard is not None]
     mt = [o.mttr_s for o in outcomes if o.mttr_s is not None]
     costs = [o.cost_usd for o in outcomes if o.cost_usd is not None]
+    drift_checks = sum(o.drift_checks for o in outcomes)
+    drift_fail = sum(o.blocked_by_drift + o.blocked_recovered for o in outcomes)
+    twin_better = sum(o.twin_better for o in outcomes)
+    transferred = sum(o.twin_better_transferred for o in outcomes)
 
     return ModeSummary(
         mode=mode or outcomes[0].mode,
@@ -439,6 +474,16 @@ def summarize_mode(outcomes: list, mode: str = "") -> ModeSummary:
             sum(o.input_tokens + o.output_tokens for o in outcomes) / n, 1),
         cost_per_case=round(sum(costs) / n, 6) if costs else None,
         took_mean_s=round(mean([o.took_s for o in outcomes]), 1),
+        blocked_by_precondition_total=sum(o.blocked_by_precondition for o in outcomes),
+        auto_undo_total=sum(o.auto_undos for o in outcomes),
+        drift_checks_total=drift_checks,
+        blocked_by_drift_total=sum(o.blocked_by_drift for o in outcomes),
+        blocked_recovered_total=sum(o.blocked_recovered for o in outcomes),
+        drift_failure_rate=(round(drift_fail / drift_checks, 4)
+                            if drift_checks else None),
+        twin_better_total=twin_better,
+        twin_transfer_rate=(round(transferred / twin_better, 4)
+                            if twin_better else None),
     )
 
 

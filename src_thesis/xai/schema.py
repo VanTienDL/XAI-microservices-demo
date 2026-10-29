@@ -21,6 +21,13 @@ Ba chỗ khác so với mục 7.2, đều có lý do rút ra từ phase 2:
    nên từ điển tự do không dùng được. Danh sách cặp thì mọi nhà cung cấp đều nhận.
    Giá trị số viết dưới dạng chuỗi: "1", "200m", "512Mi". Dùng `params_dict()` để
    lấy lại dạng từ điển khi cần.
+
+4. Thêm `preconditions` cho mỗi hành động — đề cương cam kết JSON có "điều kiện
+   tiên quyết" làm cơ sở cho cơ chế kiểm soát độ lệch trạng thái. Đây là DỮ LIỆU CÓ
+   KIỂU, không phải văn xuôi: LLM khai trạng thái nó tin là đúng ("currencyservice
+   đang có 0 bản sao"), và `src_thesis/agent/guards.py` đem đối chiếu với cluster
+   ngay trước khi thi hành. Chỉ có những loại mà snapshot cho LLM nhìn thấy — không
+   có loại nào về biến môi trường, vì snapshot không chứa biến môi trường.
 """
 
 from __future__ import annotations
@@ -51,12 +58,26 @@ ActionName = Literal[
 
 RiskClass = Literal["easy", "medium", "hard"]
 
+PreconditionKind = Literal[
+    "replicas_eq",      # deployment co dung N ban sao
+    "replicas_gte",     # deployment co it nhat N ban sao
+    "cpu_limit_eq",     # tran CPU dung bang gia tri nay, vi du "10m"
+]
+
 
 class ActionParam(BaseModel):
     """Một tham số của hành động. Dạng cặp khóa-giá trị để hợp schema nghiêm ngặt."""
 
     key: str
     value: str
+
+
+class Precondition(BaseModel):
+    """Một điều kiện phải đúng trên cluster thì hành động mới có nghĩa."""
+
+    kind: PreconditionKind
+    target: str = Field(description="Ten deployment duoc kiem")
+    value: str = Field(description="Gia tri ky vong, vi du '0' hoac '10m'")
 
 
 class ProposedAction(BaseModel):
@@ -73,6 +94,11 @@ class ProposedAction(BaseModel):
         description="easy va medium: agent duoc tu lam. hard: phai thu tren twin truoc"
     )
     rationale: str = Field(description="Vi sao hanh dong nay se sua duoc van de")
+    # default_factory de doc lai duoc file JSON cu, luc schema chua co truong nay.
+    preconditions: list[Precondition] = Field(
+        default_factory=list,
+        description="Trang thai phai dung tren cluster thi hanh dong moi co nghia",
+    )
 
     def params_dict(self) -> dict[str, str]:
         """Đổi về từ điển để phase 5 truyền thẳng vào hàm hành động."""

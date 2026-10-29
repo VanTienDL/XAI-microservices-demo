@@ -111,6 +111,8 @@ one on the critical business path and mention the other in reasoning_chain.
 - reasoning_chain: one short sentence per step, in the order you actually reasoned.
 - propagation_path lists affected services, NOT including the root cause itself.
 - Order proposed_actions with the most appropriate first.
+- params values must be concrete: replicas as an integer string ("1"), cpu_limit as \
+a Kubernetes quantity ("400m"). Words such as "increase" cannot be executed.
 
 ## Action risk classes
 
@@ -119,6 +121,15 @@ one on the critical business path and mention the other in reasoning_chain.
 - hard — restart_pod, rollback. These must be validated on a digital twin first.
 - no_action — the correct choice when the system is already recovering on its own, \
 for example after Kubernetes replaced a deleted pod.
+
+## Preconditions
+
+For every action, list in preconditions the cluster state your action relies on, \
+using only facts visible in the snapshot: replicas_eq / replicas_gte (number of \
+replicas of a deployment) and cpu_limit_eq (its CPU limit, e.g. "10m"). Example: \
+scale_up on a deployment with NO PODS relies on replicas_eq 0. These may be checked \
+against the live cluster right before execution; an action whose preconditions are \
+false is not executed. Use an empty list for no_action.
 """
 
 USER_PROMPT_TEMPLATE = """\

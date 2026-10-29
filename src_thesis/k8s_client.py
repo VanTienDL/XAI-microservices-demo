@@ -164,6 +164,31 @@ class K8sClient:
             return c.resources.requests.get("cpu")
         return None
 
+    def deployment_configs(self, namespace: str | None = None,
+                           env_keys: tuple[str, ...] = ("EXTRA_LATENCY",)) -> dict[str, dict]:
+        """Cấu hình của mọi deployment trong namespace, đọc bằng MỘT lần gọi API.
+
+        Dùng cho phép đối sánh trạng thái trước khi thi hành (`agent/guards.py`).
+        Chỉ lấy thứ có thể bị đổi bởi lỗi tiêm hoặc bởi hành động của agent: số bản
+        sao, image, trần CPU, lượng CPU xin trước, và các biến môi trường trong
+        `env_keys`. Cố ý KHÔNG lấy số pod đang sẵn sàng: con số đó dao động tự nhiên
+        mỗi khi pod khởi động, so nó thì báo lệch giả liên tục.
+        """
+        ns = namespace or self.namespace
+        out: dict[str, dict] = {}
+        for d in self.apps.list_namespaced_deployment(ns).items:
+            c = d.spec.template.spec.containers[0]
+            res = c.resources
+            env = {e.name: e.value for e in (c.env or []) if e.name in env_keys}
+            out[d.metadata.name] = {
+                "replicas": int(d.spec.replicas or 0),
+                "image": c.image,
+                "cpu_limit": (res.limits or {}).get("cpu") if res else None,
+                "cpu_request": (res.requests or {}).get("cpu") if res else None,
+                **{f"env.{k}": env.get(k) for k in env_keys},
+            }
+        return out
+
     # ------------------------------------------------------------------
     # GHI — mọi hàm trả về giá trị cũ để hoàn tác
     # ------------------------------------------------------------------
@@ -334,10 +359,30 @@ class K8sClient:
 
     def wait_ready(self, deployment: str, timeout: int = 120,
                    namespace: str | None = None) -> bool:
-        """Chờ deployment có đủ số bản chạy như đã khai báo."""
+        """Chờ deployment rollout xong HẲN: mọi pod đang chạy đều mang cấu hình mới.
+
+        Bản cũ chỉ đếm pod sẵn sàng, mà pod CŨ vẫn được đếm cho tới khi bị thay. Đổi
+        trần CPU xong, hàm trả về sau chưa tới 1 giây trong khi pod mới còn chưa
+        chạy — hành động báo `verified` khi hệ thống chưa hề chạy cấu hình mới. Bạn
+        cùng nhóm bắt được lỗi này trên k3s (2026-10-07). Với tự hoàn tác thì lỗi này
+        nặng hơn: phép đo "sau" sẽ đo nhầm pod cũ.
+
+        Điều kiện giống `kubectl rollout status`: controller đã thấy bản cấu hình mới
+        nhất, và số pod hiện có, pod đã cập nhật, pod sẵn sàng đều bằng số khai báo.
+        """
         ns = namespace or self.namespace
-        want = self.get_replicas(deployment, ns)
-        return self.wait_replicas(deployment, want, timeout, ns)
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            d = self.apps.read_namespaced_deployment(deployment, ns)
+            want = int(d.spec.replicas or 0)
+            st = d.status
+            if ((st.observed_generation or 0) >= (d.metadata.generation or 0)
+                    and int(st.updated_replicas or 0) == want
+                    and int(st.replicas or 0) == want
+                    and int(st.available_replicas or 0) == want):
+                return True
+            time.sleep(2)
+        return False
 
     # ------------------------------------------------------------------
     # Nội bộ

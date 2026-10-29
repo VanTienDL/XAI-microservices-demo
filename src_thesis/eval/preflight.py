@@ -36,6 +36,83 @@ def _log(msg: str, log=None) -> None:
     (log or print)(msg)
 
 
+# Nguong "vua tao lai" cua prompt (`serialize.describe_pods`, mac dinh 600 giay).
+# Hai cho PHAI cung mot so: pod tre hon nguong nay se hien "RECREATED" trong prompt.
+SETTLED_AGE_S = 600.0
+
+
+def young_pods(k8s: K8sClient, min_age_s: float = SETTLED_AGE_S,
+               namespace: str = "default") -> list[tuple[str, float]]:
+    """Pod ứng dụng trẻ hơn `min_age_s`, dạng (tên, tuổi giây), trẻ nhất trước.
+
+    Tuổi lấy SỐ NHỎ HƠN giữa tuổi pod và thời gian từ lần khởi động lại gần nhất —
+    đúng cách prompt xét. Pod hạ tầng bỏ qua bằng đúng bộ lọc mà prompt dùng.
+    """
+    from src_thesis.graph.serialize import INFRA_PODS
+
+    out: list[tuple[str, float]] = []
+    for p in k8s.list_pods(namespace):
+        if p.name.startswith(INFRA_PODS):
+            continue
+        ages = [a for a in (p.age_s, p.last_restart_age_s) if a is not None]
+        if ages and min(ages) < min_age_s:
+            out.append((p.name, min(ages)))
+    return sorted(out, key=lambda x: x[1])
+
+
+def wait_for_settled_pods(k8s: K8sClient, min_age_s: float = SETTLED_AGE_S,
+                          max_wait_s: float = 900.0, log=None,
+                          sleep=time.sleep) -> bool:
+    """Chờ tới khi không còn pod ứng dụng nào trẻ hơn `min_age_s`.
+
+    VÌ SAO CẦN: dọn dẹp sau mỗi ca làm Kubernetes tạo lại pod, và tắt rồi bật máy thì
+    MỌI pod đều vừa tạo lại. Ca sau bắt đầu lúc đó thì prompt ghi pod là "RECREATED"
+    — một manh mối không thuộc lỗi đang tiêm, và cũng chính là chữ ký của S3. Bạn
+    cùng nhóm đo được 7/8 vòng bị nhiễm kiểu này trước khi sửa, 0/17 sau khi sửa.
+
+    Mỗi lượt chờ đúng phần còn thiếu của pod trẻ nhất cộng 5 giây rồi kiểm lại. Quá
+    `max_wait_s` nghĩa là có pod khởi động lại liên tục — lỗi thật, trả False.
+    """
+    deadline = time.time() + max_wait_s
+    while True:
+        young = young_pods(k8s, min_age_s)
+        if not young:
+            return True
+        name, age = young[0]
+        need = min_age_s - age + 5
+        if time.time() + need > deadline:
+            _log(f"  {len(young)} pod van tre hon {min_age_s:.0f}s sau "
+                 f"{max_wait_s:.0f}s cho — co pod khoi dong lai lien tuc? "
+                 f"({', '.join(n for n, _ in young)})", log)
+            return False
+        _log(f"  {len(young)} pod tre hon {min_age_s:.0f}s (tre nhat {name}, "
+             f"{age:.0f}s), cho {need:.0f}s", log)
+        sleep(need)
+
+
+def wait_clean_slate(k8s: K8sClient | None = None, max_wait_s: float = 240.0,
+                     poll_s: float = 10.0, log=None,
+                     sleep=time.sleep) -> tuple[bool, list[str]]:
+    """Như `ensure_clean_slate`, nhưng kiểm lại nhiều lần trước khi kết luận bẩn.
+
+    VÌ SAO CẦN: hoàn tác lỗi độ trễ xong, pod CŨ còn đang xử lý dở các request ngủ 6
+    giây nên mất vài chục giây mới tắt hẳn — trong lúc đó nó vẫn nằm trong danh sách
+    pod với trạng thái chưa sẵn sàng. Kiểm đúng một lần thì bắt trúng khoảnh khắc đó:
+    phiên đầu tiên trên máy ảo đã dừng cả phiên sau 7 ca chỉ vì vậy.
+
+    Thứ thật sự bẩn (lỗi chưa hoàn tác, twin còn sống) không tự hết, nên chờ thêm
+    vài phút cũng chỉ làm chậm việc báo lỗi, không che mất nó.
+    """
+    deadline = time.time() + max_wait_s
+    while True:
+        ok, problems = ensure_clean_slate(k8s, log=lambda m: None)
+        if ok or time.time() + poll_s > deadline:
+            return ok, problems
+        _log(f"  chua sach ({'; '.join(problems)[:120]}), kiem lai sau {poll_s:.0f}s",
+             log)
+        sleep(poll_s)
+
+
 def ensure_clean_slate(k8s: K8sClient | None = None, log=None) -> tuple[bool, list[str]]:
     """Kiểm tra cấu hình sạch. Trả về (sạch, danh sách vấn đề).
 

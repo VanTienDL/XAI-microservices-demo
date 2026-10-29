@@ -1,4 +1,4 @@
-"""Vòng lặp thí nghiệm phase 6 — 3 chế độ × 5 kịch bản × 5 lần = 75 ca.
+"""Vòng lặp thí nghiệm phase 6 — 3 chế độ × 6 kịch bản × 5 lần, baseline 2 lần = 72 ca.
 
 Đây là chỗ sinh ra toàn bộ số liệu của chương kết quả. Mỗi ca đi đúng bảy bước:
 
@@ -28,7 +28,9 @@ sánh, thay vì có đầy đủ S1 và không có gì khác.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import subprocess
 import time
 import traceback
 from pathlib import Path
@@ -40,7 +42,9 @@ from src_thesis.eval.preflight import (
     capture_baseline,
     compare_with_previous_baseline,
     ensure_clean_slate,
+    wait_clean_slate,
     wait_for_clean_baseline,
+    wait_for_settled_pods,
 )
 from src_thesis.faults.injectors import FaultInjector, load_active_faults
 from src_thesis.faults.library import (
@@ -53,14 +57,59 @@ from src_thesis.graph.baseline import find_baseline_file, graph_from_dict
 from src_thesis.graph.model import ServiceGraph
 from src_thesis.k8s_client import K8sClient
 from src_thesis.telemetry.snapshot import take_snapshot
-from src_thesis.xai.reasoner import XaiReasoner
+from src_thesis.xai.reasoner import PROMPT_VERSION, XaiReasoner
 
-EVAL_DIR = Path(__file__).resolve().parents[2] / "data" / "eval"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+EVAL_DIR = REPO_ROOT / "data" / "eval"
+
+# File nho cua mot phien. Chay ngat quang nhieu buoi (--resume) thi moi buoi phai
+# do bang CUNG MOT THUOC: cung anh nen, cung code, cung prompt, cung model. Khong
+# co file nay thi moi buoi chup anh nen moi — tuc doi thuoc do giua chung phien ma
+# khong ai biet.
+SESSION_FILE = "session.json"
+
+# Nhung thu ma doi mot dong la doi ket qua. Doi file ngoai danh sach nay (tai lieu,
+# script ve do thi) thi khong can chan resume.
+FINGERPRINT_GLOBS = ("src_thesis/**/*.py", "src_thesis/**/*.yaml",
+                     "scripts/eval_run.py", "infra/**/*.yaml")
+
+
+def code_fingerprint(root: Path = REPO_ROOT) -> dict:
+    """Dấu vân tay của code đang chạy.
+
+    Băm NỘI DUNG file chứ không chỉ lấy mã commit: chạy từ một thư mục chưa commit
+    thì mã commit vẫn y nguyên dù code đã đổi. Mã commit và cờ "còn thay đổi chưa
+    commit" vẫn ghi kèm để người đọc tìm lại được phiên bản.
+    """
+    h = hashlib.sha256()
+    files = sorted({p for g in FINGERPRINT_GLOBS for p in root.glob(g)
+                    if "__pycache__" not in p.parts})
+    for p in files:
+        h.update(p.relative_to(root).as_posix().encode())
+        # Bo \r de cung mot code tren Windows va Linux cho cung mot dau van tay.
+        h.update(p.read_bytes().replace(b"\r\n", b"\n"))
+
+    def git(*args: str) -> str:
+        try:
+            return subprocess.run(["git", *args], cwd=root, capture_output=True,
+                                  text=True, timeout=15).stdout.strip()
+        except Exception:
+            return ""
+
+    return {"code_sha": h.hexdigest()[:16], "n_files": len(files),
+            "git_head": git("rev-parse", "--short", "HEAD"),
+            "git_dirty": bool(git("status", "--porcelain", "--", "src_thesis",
+                                  "scripts", "infra"))}
 
 # Ba chế độ của mục 8 KLTN.md. `xai_only` không nằm trong ba chế độ đó — nó chỉ đo
 # riêng chất lượng XAI và có ở đây để chạy thử rẻ tiền, KHÔNG đưa vào bảng so sánh.
 DEFAULT_MODES = ("baseline", "direct", "twin_verified")
-DEFAULT_SCENARIOS = ("S1", "S2", "S3", "S4", "S5")
+DEFAULT_SCENARIOS = ("S1", "S2", "S3", "S4", "S5", "S6")
+
+# Baseline khong goi LLM va bon trong sau kich ban la loi CAU HINH ma Kubernetes
+# khong bao gio tu go, nen ket qua cua no gan nhu tat dinh: lap 5 lan chi xac nhan
+# lai mot dieu da biet, ton them khoang 6 gio may. Hai lan la du de thay no lap lai.
+DEFAULT_BASELINE_REPEATS = 2
 
 # Chế độ `baseline` không sửa gì, nên phải có mốc bỏ cuộc. Con số này là MỘT CÁI
 # TRẦN, không phải một phép đo: ghi "baseline không hồi phục trong 600 giây" là
@@ -103,12 +152,15 @@ class EvalRunner:
         dry_run: bool = False,
         baseline_give_up_s: int = BASELINE_GIVE_UP_S,
         baseline_file: str | None = None,
+        baseline_repeats: int | None = DEFAULT_BASELINE_REPEATS,
+        allow_code_change: bool = False,
         log=print,
     ):
         self.run_id = run_id or time.strftime("%Y%m%d-%H%M%S")
         self.modes = tuple(modes)
         self.scenarios = tuple(scenarios)
         self.repeats = repeats
+        self.baseline_repeats = repeats if baseline_repeats is None else baseline_repeats
         self.settle_seconds = settle_seconds
         self.max_rounds = max_rounds
         self.dry_run = dry_run
@@ -136,6 +188,9 @@ class EvalRunner:
         # moi ca duoc cham bang cung mot thuoc, nhung neu may khoi dong lai va do
         # tre tuyet doi doi thi nen ghim tro thanh sai.
         self.baseline_file = baseline_file
+        self.allow_code_change = allow_code_change
+        self.fingerprint = {**code_fingerprint(), "prompt_version": PROMPT_VERSION,
+                            "model": self.model_name}
 
     # ------------------------------------------------------------------
     # CHUAN BI
@@ -156,9 +211,36 @@ class EvalRunner:
                 self.log(f"  - {p}")
             return False
 
+        fp = self.fingerprint
+        self.log(f"Code : {fp['code_sha']} ({fp['n_files']} file, git {fp['git_head']}"
+                 f"{', CHUA COMMIT' if fp['git_dirty'] else ''}), "
+                 f"prompt {fp['prompt_version']}")
+        session = self._load_session()
+        if session is not None and not self._session_matches(session):
+            return False
+
         if self.dry_run:
             self.baseline_note = "dry_run: khong chup nen"
             return True
+
+        # Tat may roi bat lai thi moi pod deu vua tao lai. Chup nen luc do thi muc
+        # "luc khoe" bi doi len (pod moi khoi dong cham), lam phat hien canh cham kem
+        # nhay suot ca phien — loi nay ban cung nhom da gap that.
+        if not wait_for_settled_pods(self.k8s, log=self.log):
+            self.log("KHONG CHAY DUOC — co pod khoi dong lai lien tuc")
+            return False
+
+        # Resume: dung lai DUNG anh nen cua buoi dau, tru khi nguoi chay ghim file khac.
+        if session is not None and not self.baseline_file:
+            prev = session.get("baseline_file")
+            if prev and (REPO_ROOT / prev).exists():
+                self.baseline_file = str(REPO_ROOT / prev)
+                self.log(f"Resume: dung lai anh nen cua phien ({prev})")
+            elif prev:
+                self.log(f"KHONG CHAY DUOC — phien ghi anh nen {prev} nhung file "
+                         f"khong con. Ghim file khac bang --baseline-file neu chap "
+                         f"nhan doi thuoc do.")
+                return False
 
         if self.baseline_file:
             path = Path(self.baseline_file)
@@ -173,6 +255,8 @@ class EvalRunner:
             self.baseline = graph
             self.baseline_note = f"{path.name} (GHIM, {len(graph.edges)} canh)"
             self.log(f"Dung anh nen da ghim: {self.baseline_note}")
+            if session is None:
+                self._save_session(path)
             return True
 
         # Lay nen cua phien TRUOC ngay bay gio, truoc khi nen moi duoc luu de.
@@ -185,7 +269,51 @@ class EvalRunner:
         self.baseline = graph
         self.baseline_note = f"{path.name} ({len(graph.edges)} canh)"
         compare_with_previous_baseline(graph, prev, log=self.log)
+        self._save_session(path)
         return True
+
+    # ------------------------------------------------------------------
+    # FILE PHIEN
+    # ------------------------------------------------------------------
+
+    def _load_session(self) -> dict | None:
+        path = self.out_dir / SESSION_FILE
+        if not path.exists():
+            return None
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return None
+
+    def _session_matches(self, session: dict) -> bool:
+        """Resume chỉ được phép khi code, prompt và model y như buổi đầu."""
+        diffs = [f"{k}: {session.get(k)} -> {self.fingerprint.get(k)}"
+                 for k in ("code_sha", "prompt_version", "model")
+                 if session.get(k) != self.fingerprint.get(k)]
+        if not diffs:
+            return True
+        self.log("Code/prompt/model DA DOI so voi luc bat dau phien:")
+        for d in diffs:
+            self.log(f"  - {d}")
+        if self.allow_code_change:
+            self.log("  --allow-code-change: van chay tiep, nho ghi ro vao bao cao.")
+            return True
+        self.log("KHONG CHAY TIEP: cac ca truoc va sau se do bang hai thuoc khac "
+                 "nhau. Tra code ve nhu cu, hoac mo phien moi, hoac them "
+                 "--allow-code-change neu chap nhan.")
+        return False
+
+    def _save_session(self, baseline_path: Path | None) -> None:
+        rel = None
+        if baseline_path is not None:
+            try:
+                rel = Path(baseline_path).resolve().relative_to(REPO_ROOT).as_posix()
+            except ValueError:
+                rel = str(baseline_path)
+        data = {**self.fingerprint, "run_id": self.run_id, "baseline_file": rel,
+                "created_at_human": time.strftime("%Y-%m-%d %H:%M:%S")}
+        (self.out_dir / SESSION_FILE).write_text(
+            json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
     def plan(self) -> list[tuple[str, str, int]]:
         """Danh sách ca theo thứ tự chạy: lặp ngoài, kịch bản giữa, chế độ trong."""
@@ -195,6 +323,8 @@ class EvalRunner:
         for rep in range(1, self.repeats + 1):
             for sid in order:
                 for mode in self.modes:
+                    if mode == "baseline" and rep > self.baseline_repeats:
+                        continue
                     cases.append((sid, mode, rep))
         return cases
 
@@ -230,11 +360,16 @@ class EvalRunner:
         self.log("=" * 70)
 
         # --- 1. sach chua ---
-        ok, problems = ensure_clean_slate(self.k8s, log=self.log)
+        ok, problems = (wait_clean_slate(self.k8s, log=self.log) if not self.dry_run
+                        else ensure_clean_slate(self.k8s, log=self.log))
         if not ok:
             raise RunAborted("; ".join(problems))
 
         if not self.dry_run:
+            # Don dep ca truoc lam Kubernetes tao lai pod. Khong cho thi prompt cua
+            # ca nay mang dau "RECREATED" cua ca truoc.
+            if not wait_for_settled_pods(self.k8s, log=self.log):
+                raise CaseAborted("co pod khoi dong lai lien tuc")
             snap = wait_for_clean_baseline(f"eval-{case_id}-truoc",
                                            baseline=self.baseline,
                                            save=False, log=self.log)
@@ -261,6 +396,9 @@ class EvalRunner:
             "mode": mode,
             "repeat": rep,
             "model": self.model_name,
+            # Ca nao cung mang dau van tay code: doc lai mot ca le van biet no do
+            # bang phien ban code, prompt nao.
+            "code": self.fingerprint,
             "baseline_source": self.baseline_note,
             "injected_at": injected_at,
             "injected_at_human": time.strftime("%Y-%m-%d %H:%M:%S",
@@ -318,37 +456,9 @@ class EvalRunner:
 
         Đó chính là điều cần chứng minh: không có agent thì lỗi cấu hình nằm đó mãi.
         """
-        rounds: list[dict] = []
         started = time.time()
-        recovered_at = None
-        deadline = started + self.baseline_give_up_s
-
-        while True:
-            snap = take_snapshot(label=f"eval-{case_id}-r{len(rounds) + 1}",
-                                 baseline=self.baseline)
-            d = snap.to_dict()
-            diff = d.get("diff", {})
-            n_err = len(diff.get("error_edges", []))
-            n_slow = len(diff.get("slow_edges", []))
-            n_miss = len(diff.get("missing_edges", []))
-            healthy = n_err == 0 and n_slow == 0 and n_miss == 0
-            rounds.append({
-                "round_no": len(rounds) + 1,
-                "snapshot_label": d.get("label", ""),
-                "observed_at": d.get("taken_at", time.time()),
-                "diff_summary": f"{n_err} canh loi, {n_slow} canh cham, "
-                                f"{n_miss} canh thieu",
-                "healthy": healthy,
-                "red": compact_red(d.get("red", {})),
-                "reasoning_ran": False,
-            })
-            self.log(f"  theo doi vong {len(rounds)}: {rounds[-1]['diff_summary']}")
-            if healthy:
-                recovered_at = rounds[-1]["observed_at"]
-                break
-            if time.time() >= deadline or self.dry_run:
-                break
-            time.sleep(BASELINE_POLL_GAP_S)
+        rounds, recovered_at = self._observe_until_healthy(
+            f"eval-{case_id}", started + self.baseline_give_up_s)
 
         report = {
             "run_id": case_id,
@@ -372,6 +482,41 @@ class EvalRunner:
             "rounds": rounds,
         }
         return report, rounds[-1]["red"] if rounds else {}
+
+    def _observe_until_healthy(self, label: str, deadline: float,
+                               first_round_no: int = 1) -> tuple[list[dict], float | None]:
+        """Chụp snapshot mỗi `BASELINE_POLL_GAP_S` giây cho tới khi hệ thống khỏe
+        hoặc tới `deadline`. Trả về (các vòng theo dõi, thời điểm thấy khỏe hoặc None).
+
+        Dùng chung cho baseline và cho phần theo dõi sau khi agent dừng, để MTTR của
+        ba chế độ đo bằng cùng một luật "khỏe" và cùng một nhịp quan sát.
+        """
+        rounds: list[dict] = []
+        while True:
+            no = first_round_no + len(rounds)
+            snap = take_snapshot(label=f"{label}-r{no}", baseline=self.baseline)
+            d = snap.to_dict()
+            diff = d.get("diff", {})
+            n_err = len(diff.get("error_edges", []))
+            n_slow = len(diff.get("slow_edges", []))
+            n_miss = len(diff.get("missing_edges", []))
+            healthy = n_err == 0 and n_slow == 0 and n_miss == 0
+            rounds.append({
+                "round_no": no,
+                "snapshot_label": d.get("label", ""),
+                "observed_at": d.get("taken_at", time.time()),
+                "diff_summary": f"{n_err} canh loi, {n_slow} canh cham, "
+                                f"{n_miss} canh thieu",
+                "healthy": healthy,
+                "red": compact_red(d.get("red", {})),
+                "reasoning_ran": False,
+            })
+            self.log(f"  theo doi vong {no}: {rounds[-1]['diff_summary']}")
+            if healthy:
+                return rounds, rounds[-1]["observed_at"]
+            if time.time() >= deadline or self.dry_run:
+                return rounds, None
+            time.sleep(BASELINE_POLL_GAP_S)
 
     def _run_agent_mode(self, mode: str, case_id: str) -> tuple[dict, dict]:
         """Chạy agent ReAct ở chế độ `direct`, `twin_verified` hoặc `xai_only`."""
@@ -403,12 +548,30 @@ class EvalRunner:
 
         report = agent.run(run_id=case_id, save=True, on_round=on_round)
 
-        # DO LAN CUOI. Vong cuoi cung co the vua thi hanh mot hanh dong roi vong
-        # lap ket thuc — khong co lan quan sat nao sau no. Thieu phep do nay thi
-        # hanh dong cuoi cung khong tinh duoc harmful hay khong, va no thuong lai
-        # chinh la hanh dong dang quan tam nhat.
+        # THEO DOI TIEP SAU KHI AGENT DUNG. Agent dung vi chon `no_action`, vi het
+        # tran vong, hay vi XAI hong — deu KHONG co lan quan sat nao sau do, nen
+        # report ghi "chua khoe" du he thong khoe ngay sau. Phien dau tren may ao do
+        # sai dung cho nay: ca ba ca S3 co agent bi ghi "khong hoi phuc" trong khi
+        # baseline cung kich ban ghi hoi phuc sau 211 giay, ma he thong tu khoe
+        # giong het nhau. MTTR tinh toi luc he thong khoe, bat ke ai sua, nen phai
+        # theo doi bang dung luat va nhip cua baseline.
         final_red: dict = {}
-        if not self.dry_run:
+        if not self.dry_run and not report.get("healthy_at_end"):
+            post, recovered_at = self._observe_until_healthy(
+                f"eval-{case_id}-sau", time.time() + self.baseline_give_up_s,
+                first_round_no=len(report.get("rounds") or []) + 1)
+            report["post_rounds"] = post
+            if recovered_at is not None:
+                report["healthy_at_end"] = True
+                report["recovered_at"] = recovered_at
+                report["recovered_after_agent_stopped"] = True
+            else:
+                report["gave_up_at"] = time.time()
+            final_red = post[-1]["red"] if post else {}
+        elif not self.dry_run:
+            # DO LAN CUOI. Vong cuoi cung co the vua thi hanh mot hanh dong roi vong
+            # lap ket thuc — khong co lan quan sat nao sau no. Thieu phep do nay thi
+            # hanh dong cuoi cung khong tinh duoc harmful hay khong.
             snap = take_snapshot(label=f"eval-{case_id}-final",
                                  baseline=self.baseline)
             final_red = compact_red(snap.to_dict().get("red", {}))
@@ -433,7 +596,19 @@ class EvalRunner:
             output_tokens=report.get("total_output_tokens", 0),
             took_s=report.get("took_s", 0.0),
             actions_rejected_by_twin=report.get("actions_rejected_by_twin", 0),
+            blocked_by_precondition=report.get("blocked_by_precondition", 0),
+            drift_checks=report.get("drift_checks", 0),
+            blocked_by_drift=report.get("blocked_by_drift", 0),
+            blocked_recovered=report.get("blocked_recovered", 0),
+            auto_undos=report.get("auto_undos", 0),
         )
+        for r in rounds:
+            if (r.get("twin_verdict") or {}).get("verdict") != "better":
+                continue
+            out.twin_better += 1
+            prod = ((r.get("watch") or {}).get("verdict") or {}).get("verdict")
+            if r.get("promoted") and prod == "better":
+                out.twin_better_transferred += 1
         out.cost_usd = M.cost_usd(case.get("model", ""), out.input_tokens,
                                   out.output_tokens)
 
@@ -468,8 +643,8 @@ class EvalRunner:
             notes.append("khong vong nao chan doan thanh cong")
 
         # --- chi so 3: MTTR ---
-        recovered_at = None
-        if report.get("healthy_at_end"):
+        recovered_at = report.get("recovered_at")
+        if recovered_at is None and report.get("healthy_at_end"):
             healthy_round = next((r for r in rounds if r.get("healthy")), None)
             if healthy_round is not None:
                 recovered_at = healthy_round.get("observed_at")
@@ -493,8 +668,17 @@ class EvalRunner:
                                 "verdict": "no_action",
                                 "reason": "agent co y khong lam gi"})
                 continue
-            before = r.get("red") or {}
-            after = (rounds[i + 1].get("red") if i + 1 < len(rounds) else final_red)
+            # Uu tien cap so do cua node `watch`: do ngay truoc khi ap va mot cua so
+            # sau khi ap. Lay RED cua vong sau nhu cach cu thi SAI khi da tu hoan tac:
+            # vong sau do trang thai SAU hoan tac, va mot hanh dong co hai trong
+            # nhu vo hai. File ca cu chua co `watch` thi van cham theo cach cu.
+            watch = r.get("watch") or {}
+            if watch.get("before") is not None and watch.get("after") is not None:
+                before, after = watch["before"], watch["after"]
+            else:
+                before = r.get("red") or {}
+                after = (rounds[i + 1].get("red") if i + 1 < len(rounds)
+                         else final_red)
             eff = M.classify_action_effect(
                 ar.get("action", ""), ar.get("target", ""),
                 before, after or {}, applied=bool(ar.get("ok")))
@@ -531,10 +715,15 @@ class EvalRunner:
             return log
 
         # --- hoan tac hanh dong cua agent, theo thu tu NGUOC ---
+        # Hoan tac moi hanh dong DA DOI cluster (`applied`), khong chi cai `ok`: mot
+        # hanh dong doi xong ma doc lai khong khop van de lai thay doi tren cluster.
+        # Bo qua cai da duoc agent tu hoan tac thanh cong.
         applied: list[dict] = []
         for r in report.get("rounds") or []:
             ar = r.get("action_result")
-            if ar and ar.get("ok") and ar.get("undo_kind", "none") != "none":
+            if (r.get("auto_undo") or {}).get("ok"):
+                continue
+            if ar and ar.get("applied") and ar.get("undo_kind", "none") != "none":
                 applied.append(ar)
         for ar in reversed(applied):
             payload = {k: v for k, v in ar.items() if k != "ok"}
@@ -562,7 +751,7 @@ class EvalRunner:
                 log["fault_revert"].append({"fault_id": fid, "error": str(e)[:300]})
                 self.log(f"  hoan tac {fid} NEM LOI: {e}")
 
-        ok, problems = ensure_clean_slate(self.k8s, log=self.log)
+        ok, problems = wait_clean_slate(self.k8s, log=self.log)
         log["clean_after"] = ok
         log["problems_after"] = problems
         return log
@@ -604,6 +793,7 @@ class EvalRunner:
             "run_id": self.run_id,
             "written_at_human": time.strftime("%Y-%m-%d %H:%M:%S"),
             "model": self.model_name,
+            "code": self.fingerprint,
             "baseline_source": self.baseline_note,
             "thresholds": {
                 "harmful_error_delta": M.HARMFUL_ERROR_DELTA,

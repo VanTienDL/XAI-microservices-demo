@@ -222,6 +222,13 @@ class FaultInjector:
 
         Lưu ý: đổi biến môi trường làm Kubernetes tạo pod mới, mất 10 tới 20 giây
         mới thấy triệu chứng. Đừng đo ngay lập tức rồi kết luận là lỗi không ăn.
+
+        ĐÁP ÁN CHỈ CÒN `rollback`. Bản đầu chấp nhận cả `adjust_resources` và
+        `restart_pod`, nhưng cả hai đều không gỡ được lỗi: pod mới sinh từ cùng
+        template nên vẫn mang `EXTRA_LATENCY`, còn CPU lúc lỗi chỉ dùng khoảng 1%
+        trần. Đã đo thật trên k3s (repo của bạn cùng nhóm, 2026-10-08): nâng CPU lên
+        400m thì p95 của service vẫn đứng yên ở 9750ms. Chấm hai hành động đó là
+        "đúng" là chấm đúng cho một hành động không chữa được bệnh.
         """
         if service != "productcatalogservice":
             raise ValueError(
@@ -236,8 +243,8 @@ class FaultInjector:
                 fault_type="latency",
                 params={"extra_latency": extra_latency},
                 expected_propagation=expected_propagation(service),
-                correct_action_class="medium",
-                correct_actions=["adjust_resources", "restart_pod", "rollback"],
+                correct_action_class="hard",
+                correct_actions=["rollback"],
                 injected_at=time.time(),
             ),
             undo_kind="env",

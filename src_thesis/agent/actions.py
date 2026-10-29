@@ -5,10 +5,15 @@ Mỗi hành động có ba thứ:
   - hàm hoàn tác, dựng lại từ chính `ActionResult` đó
   - `risk_class` quyết định agent được tự làm hay phải thử trên twin trước
 
-PHÂN MỨC RỦI RO (mục 7.3 KLTN.md):
+PHÂN MỨC RỦI RO (mục 7.3 KLTN.md, Bảng 2 đề cương):
   easy    scale_up, scale_down, adjust_resources   agent tự làm
-  medium  reroute_traffic, purge_queue             agent tự làm
+  medium  reroute_traffic, purge_queue             agent tự làm — nhưng Online
+                                                   Boutique không có chỗ để làm,
+                                                   nên luôn bị `can_apply` chặn
   hard    restart_pod, rollback                    PHẢI qua twin xác nhận
+
+Ở chế độ `twin_verified`, mọi mức đều được đo lại sau khi áp và tự hoàn tác nếu
+production tệ đi (`react_loop._watch`). Chỉ `restart_pod` là không hoàn tác được.
 
 CHỖ NGUY HIỂM NHẤT CỦA CẢ FILE NÀY LÀ HÀM HOÀN TÁC.
 
@@ -321,11 +326,17 @@ class ActionExecutor:
         `unset_env` trong `k8s_client` đã cài đúng cách này.
         """
         removed, kept = [], []
+        # Nho gia tri cu cua tung bien da go, de tu hoan tac duoc khi rollback lam
+        # production te di. Ban dau rollback de undo_kind "none", tuc la mot hanh
+        # dong `hard` khong co duong lui — dung loai can duong lui nhat.
+        old_values: list[dict] = []
         for key in ROLLBACK_ENV_KEYS:
-            if self.k8s.get_env(target, key, namespace=self.namespace) is None:
+            old = self.k8s.get_env(target, key, namespace=self.namespace)
+            if old is None:
                 continue
             self.k8s.unset_env(target, key, namespace=self.namespace)
             removed.append(key)
+            old_values.append({"key": key, "value": old})
 
         if not removed:
             return ActionResult(
@@ -345,7 +356,8 @@ class ActionExecutor:
             action="rollback", target=target, namespace=self.namespace,
             applied=True, verified=verified,
             detail=f"da go bien: {', '.join(removed)}",
-            undo_kind="none",
+            undo_kind="env",
+            undo_args={"items": old_values},
             error="" if verified else f"van con sau khi go: {', '.join(kept)}",
         )
 
@@ -391,15 +403,23 @@ class ActionExecutor:
                             and abs(a_m - w_m) < 1e-6)
                 detail = f"tran CPU ve lai {actual} (yeu cau {args.get('limit')})"
             elif kind == "env":
-                key, value = args["key"], args.get("value")
-                if value is None:
-                    self.k8s.unset_env(target, key, namespace=self.namespace)
-                else:
-                    self.k8s.set_env(target, key, value, namespace=self.namespace)
+                # Hai dang: mot bien {"key", "value"}, hoac nhieu bien {"items": [...]}
+                # do `rollback` ghi lai.
+                items = args.get("items") or [{"key": args["key"],
+                                               "value": args.get("value")}]
+                for it in items:
+                    if it.get("value") is None:
+                        self.k8s.unset_env(target, it["key"], namespace=self.namespace)
+                    else:
+                        self.k8s.set_env(target, it["key"], it["value"],
+                                         namespace=self.namespace)
                 self.k8s.wait_ready(target, timeout=180, namespace=self.namespace)
-                actual = self.k8s.get_env(target, key, namespace=self.namespace)
-                verified = actual == value
-                detail = f"bien {key} ve lai {actual!r} (yeu cau {value!r})"
+                parts, verified = [], True
+                for it in items:
+                    actual = self.k8s.get_env(target, it["key"], namespace=self.namespace)
+                    verified = verified and actual == it.get("value")
+                    parts.append(f"{it['key']}={actual!r} (yeu cau {it.get('value')!r})")
+                detail = "bien ve lai " + ", ".join(parts)
             else:
                 raise ValueError(f"khong biet cach hoan tac '{kind}'")
         except Exception as e:
