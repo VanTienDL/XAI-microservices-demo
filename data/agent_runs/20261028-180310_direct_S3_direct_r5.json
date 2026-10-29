@@ -1,0 +1,118 @@
+{
+  "run_id": "S3_direct_r5",
+  "mode": "direct",
+  "namespace": "default",
+  "started_at": 1793210589.9049156,
+  "started_at_human": "2026-10-28 18:03:09",
+  "took_s": 0.87,
+  "rounds_used": 1,
+  "max_rounds": 3,
+  "baseline_source": "do ben goi truyen vao",
+  "has_baseline": true,
+  "healthy_at_end": true,
+  "stop_reason": "he thong da khoe manh",
+  "total_input_tokens": 0,
+  "total_output_tokens": 0,
+  "actions_applied": 0,
+  "actions_rejected_by_twin": 0,
+  "guards": false,
+  "blocked_by_precondition": 0,
+  "drift_checks": 0,
+  "blocked_by_drift": 0,
+  "blocked_recovered": 0,
+  "auto_undos": 0,
+  "rounds": [
+    {
+      "round_no": 1,
+      "snapshot_label": "agent-S3_direct_r5-r1",
+      "snapshot_fingerprint": "a463dba470fc563d",
+      "diff_summary": "0 canh loi, 0 canh cham, 0 canh thieu",
+      "healthy": true,
+      "observed_at": 1793210590.6354456,
+      "red": {
+        "productcatalogservice": {
+          "request_rate": 13.7649,
+          "error_rate": 0.0,
+          "p95_ms": 0.47,
+          "source": "server"
+        },
+        "cartservice": {
+          "request_rate": 2.4667,
+          "error_rate": 0.0,
+          "p95_ms": 0.97,
+          "source": "client"
+        },
+        "currencyservice": {
+          "request_rate": 8.1053,
+          "error_rate": 0.0,
+          "p95_ms": 0.47,
+          "source": "server"
+        },
+        "emailservice": {
+          "request_rate": 0.0702,
+          "error_rate": 0.0,
+          "p95_ms": 0.48,
+          "source": "server"
+        },
+        "paymentservice": {
+          "request_rate": 0.0702,
+          "error_rate": 0.0,
+          "p95_ms": 0.48,
+          "source": "server"
+        },
+        "shippingservice": {
+          "request_rate": 0.6667,
+          "error_rate": 0.0,
+          "p95_ms": 0.5,
+          "source": "client"
+        },
+        "adservice": {
+          "request_rate": 1.5509,
+          "error_rate": 0.0,
+          "p95_ms": 0.96,
+          "source": "client"
+        },
+        "checkoutservice": {
+          "request_rate": 0.0736,
+          "error_rate": 0.0,
+          "p95_ms": 15.63,
+          "source": "server"
+        },
+        "recommendationservice": {
+          "request_rate": 1.8175,
+          "error_rate": 0.0,
+          "p95_ms": 1.95,
+          "source": "server"
+        },
+        "frontend": {
+          "request_rate": 2.8211,
+          "error_rate": 0.0012,
+          "p95_ms": 15.9,
+          "source": "server"
+        }
+      },
+      "reasoning_ran": false,
+      "explanation": null,
+      "reasoning_ok": false,
+      "reasoning_error": "",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "chosen_action": null,
+      "risk_class": "",
+      "twin_verdict": null,
+      "twin_used": false,
+      "action_result": null,
+      "promoted": false,
+      "skipped_reason": "",
+      "guards": false,
+      "precheck": [],
+      "drift_checked": false,
+      "drift": [],
+      "blocked_by": "",
+      "watch": null,
+      "auto_undo": null,
+      "started_at": 1793210589.9057522,
+      "took_s": 0.87
+    }
+  ]
+}

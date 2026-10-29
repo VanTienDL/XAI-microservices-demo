@@ -1,0 +1,478 @@
+{
+  "run_id": "S2_direct_r3",
+  "mode": "direct",
+  "namespace": "default",
+  "started_at": 1793162724.9987204,
+  "started_at_human": "2026-10-28 04:45:24",
+  "took_s": 317.55,
+  "rounds_used": 2,
+  "max_rounds": 3,
+  "baseline_source": "do ben goi truyen vao",
+  "has_baseline": true,
+  "healthy_at_end": true,
+  "stop_reason": "he thong da khoe manh",
+  "total_input_tokens": 4361,
+  "total_output_tokens": 356,
+  "actions_applied": 1,
+  "actions_rejected_by_twin": 0,
+  "guards": false,
+  "blocked_by_precondition": 0,
+  "drift_checks": 0,
+  "blocked_by_drift": 0,
+  "blocked_recovered": 0,
+  "auto_undos": 0,
+  "rounds": [
+    {
+      "round_no": 1,
+      "snapshot_label": "agent-S2_direct_r3-r1",
+      "snapshot_fingerprint": "5f744e7dd314a4ca",
+      "diff_summary": "3 canh loi, 0 canh cham, 7 canh thieu",
+      "healthy": false,
+      "observed_at": 1793162725.1452992,
+      "red": {
+        "productcatalogservice": {
+          "request_rate": 1.6175,
+          "error_rate": 0.0,
+          "p95_ms": 0.48,
+          "source": "server"
+        },
+        "cartservice": {
+          "request_rate": 0.3825,
+          "error_rate": 0.0,
+          "p95_ms": 0.99,
+          "source": "client"
+        },
+        "currencyservice": {
+          "request_rate": 0.0,
+          "error_rate": 0.0,
+          "p95_ms": NaN,
+          "source": "server"
+        },
+        "emailservice": {
+          "request_rate": 0.0,
+          "error_rate": 0.0,
+          "p95_ms": NaN,
+          "source": "server"
+        },
+        "paymentservice": {
+          "request_rate": 0.0,
+          "error_rate": 0.0,
+          "p95_ms": NaN,
+          "source": "server"
+        },
+        "shippingservice": {
+          "request_rate": 0.0,
+          "error_rate": 0.0,
+          "p95_ms": NaN,
+          "source": "client"
+        },
+        "adservice": {
+          "request_rate": 0.0,
+          "error_rate": 0.0,
+          "p95_ms": NaN,
+          "source": "client"
+        },
+        "checkoutservice": {
+          "request_rate": 0.0947,
+          "error_rate": 1.0,
+          "p95_ms": 1.93,
+          "source": "server"
+        },
+        "recommendationservice": {
+          "request_rate": 0.0,
+          "error_rate": 0.0,
+          "p95_ms": NaN,
+          "source": "server"
+        },
+        "frontend": {
+          "request_rate": 2.8772,
+          "error_rate": 0.7659,
+          "p95_ms": 1.71,
+          "source": "server"
+        }
+      },
+      "reasoning_ran": true,
+      "explanation": {
+        "root_cause_service": "currencyservice",
+        "fault_type": "crash",
+        "confidence": 1.0,
+        "reasoning_chain": [
+          "Multiple callers (frontend and checkoutservice) show 100% errors calling currencyservice, indicating currencyservice is the root cause.",
+          "frontend->checkoutservice also shows 100% errors, but checkoutservice->currencyservice fails at the same rate, so checkoutservice is relaying currencyservice's failure, not a separate fault.",
+          "currencyservice has no pods at all, confirming it is down and causing the failures.",
+          "Other services on the critical path have low error rates and normal latencies, so the fault is isolated to currencyservice.",
+          "Throughput collapsed to 16%, consistent with a critical service being down and blocking requests."
+        ],
+        "propagation_path": [
+          "checkoutservice",
+          "frontend"
+        ],
+        "evidence": [
+          "checkoutservice -> currencyservice: 100.0% errors (11/11 calls)",
+          "frontend -> currencyservice: 100.0% errors (57/57 calls)",
+          "frontend -> checkoutservice: 100.0% errors (12/12 calls)",
+          "currencyservice: NO PODS AT ALL",
+          "checkoutservice: 100.0% errors, p95 1.93ms",
+          "frontend: 76.6% errors, p95 1.71ms",
+          "total call volume is only 16% of healthy baseline"
+        ],
+        "proposed_actions": [
+          {
+            "action": "scale_up",
+            "target": "currencyservice",
+            "params": [
+              {
+                "key": "replicas",
+                "value": "1"
+              }
+            ],
+            "risk_class": "easy",
+            "rationale": "currencyservice has no pods running, so scaling up to 1 replica will restore service availability and fix the 100% errors downstream.",
+            "preconditions": [
+              {
+                "kind": "replicas_eq",
+                "target": "currencyservice",
+                "value": "0"
+              }
+            ]
+          }
+        ]
+      },
+      "reasoning_ok": true,
+      "reasoning_error": "",
+      "input_tokens": 4361,
+      "output_tokens": 356,
+      "chosen_action": {
+        "action": "scale_up",
+        "target": "currencyservice",
+        "params": [
+          {
+            "key": "replicas",
+            "value": "1"
+          }
+        ],
+        "risk_class": "easy",
+        "rationale": "currencyservice has no pods running, so scaling up to 1 replica will restore service availability and fix the 100% errors downstream.",
+        "preconditions": [
+          {
+            "kind": "replicas_eq",
+            "target": "currencyservice",
+            "value": "0"
+          }
+        ]
+      },
+      "risk_class": "easy",
+      "twin_verdict": null,
+      "twin_used": false,
+      "action_result": {
+        "action": "scale_up",
+        "target": "currencyservice",
+        "namespace": "default",
+        "applied": true,
+        "verified": true,
+        "detail": "so ban sao 0 -> 1 (yeu cau 1)",
+        "undo_kind": "scale",
+        "undo_args": {
+          "replicas": 0
+        },
+        "error": "",
+        "took_s": 12.05,
+        "ok": true
+      },
+      "promoted": true,
+      "skipped_reason": "",
+      "guards": false,
+      "precheck": [],
+      "drift_checked": false,
+      "drift": [],
+      "blocked_by": "",
+      "watch": {
+        "before": {
+          "productcatalogservice": {
+            "request_rate": 1.6175,
+            "error_rate": 0.0,
+            "p95_ms": 0.48,
+            "source": "server"
+          },
+          "cartservice": {
+            "request_rate": 0.3825,
+            "error_rate": 0.0,
+            "p95_ms": 0.99,
+            "source": "client"
+          },
+          "currencyservice": {
+            "request_rate": 0.0,
+            "error_rate": 0.0,
+            "p95_ms": NaN,
+            "source": "server"
+          },
+          "emailservice": {
+            "request_rate": 0.0,
+            "error_rate": 0.0,
+            "p95_ms": NaN,
+            "source": "server"
+          },
+          "paymentservice": {
+            "request_rate": 0.0,
+            "error_rate": 0.0,
+            "p95_ms": NaN,
+            "source": "server"
+          },
+          "shippingservice": {
+            "request_rate": 0.0,
+            "error_rate": 0.0,
+            "p95_ms": NaN,
+            "source": "client"
+          },
+          "adservice": {
+            "request_rate": 0.0,
+            "error_rate": 0.0,
+            "p95_ms": NaN,
+            "source": "client"
+          },
+          "checkoutservice": {
+            "request_rate": 0.0963,
+            "error_rate": 1.0,
+            "p95_ms": 1.93,
+            "source": "server"
+          },
+          "recommendationservice": {
+            "request_rate": 0.0,
+            "error_rate": 0.0,
+            "p95_ms": NaN,
+            "source": "server"
+          },
+          "frontend": {
+            "request_rate": 2.8772,
+            "error_rate": 0.7659,
+            "p95_ms": 1.71,
+            "source": "server"
+          }
+        },
+        "after": {
+          "productcatalogservice": {
+            "request_rate": 11.3684,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "cartservice": {
+            "request_rate": 1.9649,
+            "error_rate": 0.0,
+            "p95_ms": 0.98,
+            "source": "client"
+          },
+          "currencyservice": {
+            "request_rate": 5.9123,
+            "error_rate": 0.0,
+            "p95_ms": 0.48,
+            "source": "server"
+          },
+          "emailservice": {
+            "request_rate": 0.0877,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "paymentservice": {
+            "request_rate": 0.0877,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "shippingservice": {
+            "request_rate": 0.5684,
+            "error_rate": 0.0,
+            "p95_ms": 0.48,
+            "source": "client"
+          },
+          "adservice": {
+            "request_rate": 1.1123,
+            "error_rate": 0.0,
+            "p95_ms": 0.96,
+            "source": "client"
+          },
+          "checkoutservice": {
+            "request_rate": 0.0877,
+            "error_rate": 0.0,
+            "p95_ms": 24.63,
+            "source": "server"
+          },
+          "recommendationservice": {
+            "request_rate": 1.4175,
+            "error_rate": 0.0,
+            "p95_ms": 1.95,
+            "source": "server"
+          },
+          "frontend": {
+            "request_rate": 2.8386,
+            "error_rate": 0.2237,
+            "p95_ms": 20.67,
+            "source": "server"
+          }
+        },
+        "verdict": {
+          "verdict": "better",
+          "reason": "tot len o frontend",
+          "improved": [
+            "frontend"
+          ],
+          "degraded": [],
+          "measured_at": 1793163041.7900708,
+          "deltas": [
+            {
+              "service": "frontend",
+              "error_before": 0.7659,
+              "error_after": 0.2237,
+              "p95_before": 1.71,
+              "p95_after": 20.67,
+              "rate_before": 2.8772,
+              "rate_after": 2.8386,
+              "error_delta": -0.5422,
+              "p95_ratio": 11.0877
+            },
+            {
+              "service": "productcatalogservice",
+              "error_before": 0.0,
+              "error_after": 0.0,
+              "p95_before": 0.48,
+              "p95_after": 0.47,
+              "rate_before": 1.6175,
+              "rate_after": 11.3684,
+              "error_delta": 0.0,
+              "p95_ratio": -0.0208
+            },
+            {
+              "service": "cartservice",
+              "error_before": 0.0,
+              "error_after": 0.0,
+              "p95_before": 0.99,
+              "p95_after": 0.98,
+              "rate_before": 0.3825,
+              "rate_after": 1.9649,
+              "error_delta": 0.0,
+              "p95_ratio": -0.0101
+            },
+            {
+              "service": "checkoutservice",
+              "error_before": 1.0,
+              "error_after": 0.0,
+              "p95_before": 1.93,
+              "p95_after": 24.63,
+              "rate_before": 0.0963,
+              "rate_after": 0.0877,
+              "error_delta": -1.0,
+              "p95_ratio": 11.7617
+            },
+            {
+              "service": "paymentservice",
+              "error_before": 0.0,
+              "error_after": 0.0,
+              "p95_before": NaN,
+              "p95_after": 0.47,
+              "rate_before": 0.0,
+              "rate_after": 0.0877,
+              "error_delta": 0.0,
+              "p95_ratio": NaN
+            }
+          ]
+        }
+      },
+      "auto_undo": null,
+      "started_at": 1793162724.9995043,
+      "took_s": 316.79
+    },
+    {
+      "round_no": 2,
+      "snapshot_label": "agent-S2_direct_r3-r2",
+      "snapshot_fingerprint": "006dff0a8462c706",
+      "diff_summary": "0 canh loi, 0 canh cham, 0 canh thieu",
+      "healthy": true,
+      "observed_at": 1793163042.4582553,
+      "red": {
+        "productcatalogservice": {
+          "request_rate": 11.3684,
+          "error_rate": 0.0,
+          "p95_ms": 0.47,
+          "source": "server"
+        },
+        "cartservice": {
+          "request_rate": 1.9649,
+          "error_rate": 0.0,
+          "p95_ms": 0.98,
+          "source": "client"
+        },
+        "currencyservice": {
+          "request_rate": 5.9123,
+          "error_rate": 0.0,
+          "p95_ms": 0.48,
+          "source": "server"
+        },
+        "emailservice": {
+          "request_rate": 0.0877,
+          "error_rate": 0.0,
+          "p95_ms": 0.47,
+          "source": "server"
+        },
+        "paymentservice": {
+          "request_rate": 0.0877,
+          "error_rate": 0.0,
+          "p95_ms": 0.47,
+          "source": "server"
+        },
+        "shippingservice": {
+          "request_rate": 0.5684,
+          "error_rate": 0.0,
+          "p95_ms": 0.48,
+          "source": "client"
+        },
+        "adservice": {
+          "request_rate": 1.1123,
+          "error_rate": 0.0,
+          "p95_ms": 0.96,
+          "source": "client"
+        },
+        "checkoutservice": {
+          "request_rate": 0.0877,
+          "error_rate": 0.0,
+          "p95_ms": 24.63,
+          "source": "server"
+        },
+        "recommendationservice": {
+          "request_rate": 1.4175,
+          "error_rate": 0.0,
+          "p95_ms": 1.95,
+          "source": "server"
+        },
+        "frontend": {
+          "request_rate": 2.8386,
+          "error_rate": 0.2237,
+          "p95_ms": 20.67,
+          "source": "server"
+        }
+      },
+      "reasoning_ran": false,
+      "explanation": null,
+      "reasoning_ok": false,
+      "reasoning_error": "",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "chosen_action": null,
+      "risk_class": "",
+      "twin_verdict": null,
+      "twin_used": false,
+      "action_result": null,
+      "promoted": false,
+      "skipped_reason": "",
+      "guards": false,
+      "precheck": [],
+      "drift_checked": false,
+      "drift": [],
+      "blocked_by": "",
+      "watch": null,
+      "auto_undo": null,
+      "started_at": 1793163041.7914417,
+      "took_s": 0.76
+    }
+  ]
+}

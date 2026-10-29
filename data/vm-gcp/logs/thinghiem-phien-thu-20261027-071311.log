@@ -1,0 +1,176 @@
+=== 2026-10-27 05:04:08 UTC: cho phien fidelity ket thuc
+=== 2026-10-27 07:13:09 UTC: fidelity xong, kiem he thong
+Khong co loi nao dang tiem. He thong sach.
+=== 2026-10-27 07:13:10 UTC: BAT DAU thi nghiem chinh
+Phien: 20261027-071311   ghi vao /home/kltn/XAI-microservices-demo/data/eval/20261027-071311
+LLM  : openai / gpt-4.1-mini (cache TAT)
+Code : eba07a9b3cc929aa (50 file, git 956ba076, CHUA COMMIT), prompt v6
+  1 pod tre hon 600s (tre nhat productcatalogservice-7764bbb675-qlgbn, 41s), cho 564s
+Chup anh nen cho ca phien...
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+  nen moi: 20261027-072236_baseline-clean.json — 14 canh, 2264 span
+  so voi nen truoc (20261027-035651_baseline.json):
+  canh: 14 -> 14, chung 14
+  do tre trung vi doi 0.83 lan, canh lech nhat 3.00 lan
+
+Ke hoach: 72 ca, da co 0, se chay 72
+Uoc luong: 26.7 gio
+
+
+======================================================================
+CA S3_baseline_r1
+======================================================================
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S3: F3 vao checkoutservice
+  F3-checkoutservice-podkill -> checkoutservice (pod_kill)
+  cho trieu chung on dinh: 120s
+    con 60s
+  theo doi vong 1: 0 canh loi, 1 canh cham, 0 canh thieu
+  theo doi vong 2: 0 canh loi, 0 canh cham, 0 canh thieu
+  hoan tac F3-checkoutservice-podkill: checkoutservice san sang = True
+  da ghi: S3_baseline_r1.json
+  tien do: 1/72
+
+======================================================================
+CA S3_direct_r1
+======================================================================
+  1 pod tre hon 600s (tre nhat checkoutservice-777dff667-89ght, 213s), cho 392s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S3: F3 vao checkoutservice
+  F3-checkoutservice-podkill -> checkoutservice (pod_kill)
+  cho trieu chung on dinh: 120s
+    con 60s
+  vong 1: 0 canh loi, 1 canh cham, 0 canh thieu
+    chan doan checkoutservice / pod_kill
+    hanh dong no_action tren checkoutservice [easy]
+  hoan tac F3-checkoutservice-podkill: checkoutservice san sang = True
+  da ghi: S3_direct_r1.json
+  tien do: 2/72
+
+======================================================================
+CA S3_twin_verified_r1
+======================================================================
+  1 pod tre hon 600s (tre nhat checkoutservice-777dff667-wxfws, 127s), cho 478s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S3: F3 vao checkoutservice
+  F3-checkoutservice-podkill -> checkoutservice (pod_kill)
+  cho trieu chung on dinh: 120s
+    con 60s
+  vong 1: 0 canh loi, 1 canh cham, 0 canh thieu
+    chan doan checkoutservice / pod_kill
+    hanh dong no_action tren checkoutservice [easy]
+  hoan tac F3-checkoutservice-podkill: checkoutservice san sang = True
+  da ghi: S3_twin_verified_r1.json
+  tien do: 3/72
+
+======================================================================
+CA S2_baseline_r1
+======================================================================
+  1 pod tre hon 600s (tre nhat checkoutservice-777dff667-wsvsn, 127s), cho 478s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S2: F2 vao currencyservice
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  theo doi vong 1: 3 canh loi, 0 canh cham, 7 canh thieu
+  theo doi vong 2: 3 canh loi, 0 canh cham, 7 canh thieu
+  theo doi vong 3: 3 canh loi, 0 canh cham, 7 canh thieu
+  theo doi vong 4: 3 canh loi, 0 canh cham, 7 canh thieu
+  theo doi vong 5: 3 canh loi, 0 canh cham, 7 canh thieu
+  theo doi vong 6: 3 canh loi, 0 canh cham, 7 canh thieu
+  theo doi vong 7: 3 canh loi, 0 canh cham, 7 canh thieu
+  theo doi vong 8: 3 canh loi, 0 canh cham, 7 canh thieu
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  da ghi: S2_baseline_r1.json
+  tien do: 4/72
+
+======================================================================
+CA S2_direct_r1
+======================================================================
+  1 pod tre hon 600s (tre nhat currencyservice-f68cbbddb-fzthw, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S2: F2 vao currencyservice
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 3 canh loi, 0 canh cham, 7 canh thieu
+    chan doan currencyservice / crash
+    hanh dong scale_up tren currencyservice [easy]
+  vong 2: 0 canh loi, 0 canh cham, 0 canh thieu
+  hoan tac scale_up tren currencyservice: OK — so ban sao ve lai 0 (yeu cau 0)
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  da ghi: S2_direct_r1.json
+  tien do: 5/72
+
+======================================================================
+CA S2_twin_verified_r1
+======================================================================
+  1 pod tre hon 600s (tre nhat currencyservice-f68cbbddb-9snkp, 12s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S2: F2 vao currencyservice
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 3 canh loi, 0 canh cham, 7 canh thieu
+    chan doan currencyservice / crash
+    hanh dong scale_up tren currencyservice [easy]
+  vong 2: 0 canh loi, 2 canh cham, 0 canh thieu
+    chan doan currencyservice / pod_kill
+    hanh dong no_action tren currencyservice [easy]
+  hoan tac scale_up tren currencyservice: OK — so ban sao ve lai 0 (yeu cau 0)
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  da ghi: S2_twin_verified_r1.json
+  tien do: 6/72
+
+======================================================================
+CA S1_baseline_r1
+======================================================================
+  1 pod tre hon 600s (tre nhat currencyservice-f68cbbddb-6xjj5, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S1: F1 vao productcatalogservice
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  theo doi vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 2: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 3: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 4: 0 canh loi, 5 canh cham, 1 canh thieu
+  theo doi vong 5: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  da ghi: S1_baseline_r1.json
+  tien do: 7/72
+
+======================================================================
+CA S1_direct_r1
+======================================================================
+
+DUNG CA PHIEN: 1 pod chua san sang: productcatalogservice-679dc8944d-dt6pv
+Ca sau se bi nhiem neu chay tiep. Sua roi chay lai — cac ca da xong duoc giu, khong phai chay lai.
+=== 2026-10-27 09:17:01 UTC: eval_run ket thuc, ma thoat 0

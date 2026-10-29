@@ -1,0 +1,327 @@
+{
+  "case_id": "S3_twin_verified_r1",
+  "run_id": "20261027-071311",
+  "scenario": "S3",
+  "mode": "twin_verified",
+  "repeat": 1,
+  "model": "gpt-4.1-mini",
+  "code": {
+    "code_sha": "eba07a9b3cc929aa",
+    "n_files": 50,
+    "git_head": "956ba076",
+    "git_dirty": true,
+    "prompt_version": "v6",
+    "model": "gpt-4.1-mini"
+  },
+  "baseline_source": "20261027-072236_baseline-clean.json (14 canh)",
+  "injected_at": 1793086967.8127344,
+  "injected_at_human": "2026-10-27 07:42:47",
+  "ground_truth": [
+    {
+      "fault_id": "F3-checkoutservice-podkill",
+      "target_service": "checkoutservice",
+      "fault_type": "pod_kill",
+      "params": {
+        "pod": "checkoutservice-777dff667-wxfws"
+      },
+      "expected_propagation": [
+        "frontend"
+      ],
+      "correct_action_class": "easy",
+      "correct_actions": [
+        "no_action"
+      ],
+      "injected_at": 1793086967.8127344,
+      "injected_at_human": "2026-10-27 07:42:47"
+    }
+  ],
+  "settle_seconds": 300,
+  "errors": [],
+  "report": {
+    "run_id": "S3_twin_verified_r1",
+    "mode": "twin_verified",
+    "namespace": "default",
+    "started_at": 1793087087.8474503,
+    "started_at_human": "2026-10-27 07:44:47",
+    "took_s": 5.52,
+    "rounds_used": 1,
+    "max_rounds": 3,
+    "baseline_source": "do ben goi truyen vao",
+    "has_baseline": true,
+    "healthy_at_end": false,
+    "stop_reason": "agent chon khong lam gi",
+    "total_input_tokens": 4056,
+    "total_output_tokens": 321,
+    "actions_applied": 1,
+    "actions_rejected_by_twin": 0,
+    "guards": true,
+    "blocked_by_precondition": 0,
+    "drift_checks": 0,
+    "blocked_by_drift": 0,
+    "blocked_recovered": 0,
+    "auto_undos": 0,
+    "rounds": [
+      {
+        "round_no": 1,
+        "snapshot_label": "agent-S3_twin_verified_r1-r1",
+        "snapshot_fingerprint": "06868e547a985b9a",
+        "diff_summary": "0 canh loi, 1 canh cham, 0 canh thieu",
+        "healthy": false,
+        "observed_at": 1793087088.588597,
+        "red": {
+          "productcatalogservice": {
+            "request_rate": 14.3439,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "cartservice": {
+            "request_rate": 2.5404,
+            "error_rate": 0.0,
+            "p95_ms": 0.98,
+            "source": "client"
+          },
+          "currencyservice": {
+            "request_rate": 7.5018,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "emailservice": {
+            "request_rate": 0.1123,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "paymentservice": {
+            "request_rate": 0.1123,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "shippingservice": {
+            "request_rate": 0.7474,
+            "error_rate": 0.0,
+            "p95_ms": 0.49,
+            "source": "client"
+          },
+          "adservice": {
+            "request_rate": 1.5228,
+            "error_rate": 0.0,
+            "p95_ms": 0.97,
+            "source": "client"
+          },
+          "checkoutservice": {
+            "request_rate": 0.1157,
+            "error_rate": 0.0,
+            "p95_ms": 18.25,
+            "source": "server"
+          },
+          "recommendationservice": {
+            "request_rate": 1.9228,
+            "error_rate": 0.0,
+            "p95_ms": 1.96,
+            "source": "server"
+          },
+          "frontend": {
+            "request_rate": 2.7895,
+            "error_rate": 0.0,
+            "p95_ms": 18.9,
+            "source": "server"
+          }
+        },
+        "reasoning_ran": true,
+        "explanation": {
+          "root_cause_service": "checkoutservice",
+          "fault_type": "pod_kill",
+          "confidence": 0.9,
+          "reasoning_chain": [
+            "frontend->checkoutservice calls are very slow, average 104.65ms compared to healthy 6.89ms, indicating a problem at checkoutservice on the critical path.",
+            "checkoutservice's own p95 latency is 18.25ms, much lower than caller-observed latency, indicating resource exhaustion or pod restart rather than internal latency.",
+            "checkoutservice CPU usage is 0.001 of 0.200 cores (0%), so no CPU throttling, supporting pod restart or transient resource issue.",
+            "checkoutservice pod was recreated 122 seconds ago, indicating a recent pod kill and restart event.",
+            "No errors observed on any edges or services, so no crash or dependency failure.",
+            "Other services including productcatalogservice, currencyservice, and cartservice show low latency and zero errors, so they are not root cause."
+          ],
+          "propagation_path": [
+            "frontend"
+          ],
+          "evidence": [
+            "frontend->checkoutservice latency 104.65ms vs healthy 6.89ms",
+            "checkoutservice p95 latency 18.25ms much lower than caller-observed latency",
+            "checkoutservice CPU usage 0.001 of 0.200 cores (0%)",
+            "checkoutservice pod was recreated 122s ago",
+            "no errors on any edges or services"
+          ],
+          "proposed_actions": [
+            {
+              "action": "no_action",
+              "target": "checkoutservice",
+              "params": [],
+              "risk_class": "easy",
+              "rationale": "checkoutservice pod was recently recreated and is recovering on its own, no manual intervention needed.",
+              "preconditions": []
+            }
+          ]
+        },
+        "reasoning_ok": true,
+        "reasoning_error": "",
+        "input_tokens": 4056,
+        "output_tokens": 321,
+        "chosen_action": {
+          "action": "no_action",
+          "target": "checkoutservice",
+          "params": [],
+          "risk_class": "easy",
+          "rationale": "checkoutservice pod was recently recreated and is recovering on its own, no manual intervention needed.",
+          "preconditions": []
+        },
+        "risk_class": "easy",
+        "twin_verdict": null,
+        "twin_used": false,
+        "action_result": {
+          "action": "no_action",
+          "target": "checkoutservice",
+          "namespace": "default",
+          "applied": true,
+          "verified": true,
+          "detail": "khong lam gi, dung y do",
+          "undo_kind": "none",
+          "undo_args": {},
+          "error": "",
+          "took_s": 0.0,
+          "ok": true
+        },
+        "promoted": true,
+        "skipped_reason": "",
+        "guards": true,
+        "precheck": [],
+        "drift_checked": false,
+        "drift": [],
+        "blocked_by": "",
+        "watch": null,
+        "auto_undo": null,
+        "started_at": 1793087087.8483024,
+        "took_s": 5.52
+      }
+    ],
+    "saved_to": "/home/kltn/XAI-microservices-demo/data/agent_runs/20261027-074453_twin_verified_S3_twin_verified_r1.json"
+  },
+  "final_red": {
+    "productcatalogservice": {
+      "request_rate": 14.0737,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "cartservice": {
+      "request_rate": 2.4912,
+      "error_rate": 0.0,
+      "p95_ms": 0.98,
+      "source": "client"
+    },
+    "currencyservice": {
+      "request_rate": 7.2877,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "emailservice": {
+      "request_rate": 0.1123,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "paymentservice": {
+      "request_rate": 0.1123,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "shippingservice": {
+      "request_rate": 0.7333,
+      "error_rate": 0.0,
+      "p95_ms": 0.49,
+      "source": "client"
+    },
+    "adservice": {
+      "request_rate": 1.5018,
+      "error_rate": 0.0,
+      "p95_ms": 0.97,
+      "source": "client"
+    },
+    "checkoutservice": {
+      "request_rate": 0.1113,
+      "error_rate": 0.0,
+      "p95_ms": 18.25,
+      "source": "server"
+    },
+    "recommendationservice": {
+      "request_rate": 1.8632,
+      "error_rate": 0.0,
+      "p95_ms": 1.96,
+      "source": "server"
+    },
+    "frontend": {
+      "request_rate": 2.7544,
+      "error_rate": 0.0,
+      "p95_ms": 18.32,
+      "source": "server"
+    }
+  },
+  "outcome": {
+    "scenario": "S3",
+    "mode": "twin_verified",
+    "repeat": 1,
+    "run_id": "S3_twin_verified_r1",
+    "root_cause_correct": true,
+    "propagation_jaccard": 1.0,
+    "fault_type_correct": true,
+    "action_correct": true,
+    "predicted_root": "checkoutservice",
+    "expected_root": "checkoutservice",
+    "recovered": false,
+    "mttr_s": null,
+    "censored_at_s": 125.6,
+    "harmful_actions": 0,
+    "wasted_actions": 0,
+    "helpful_actions": 0,
+    "unknown_effect_actions": 0,
+    "action_effects": [
+      {
+        "action": "no_action",
+        "target": "checkoutservice",
+        "verdict": "no_action",
+        "reason": "agent co y khong lam gi"
+      }
+    ],
+    "rounds_used": 1,
+    "input_tokens": 4056,
+    "output_tokens": 321,
+    "cost_usd": 0.002136,
+    "took_s": 5.52,
+    "actions_rejected_by_twin": 0,
+    "blocked_by_precondition": 0,
+    "drift_checks": 0,
+    "blocked_by_drift": 0,
+    "blocked_recovered": 0,
+    "auto_undos": 0,
+    "twin_better": 0,
+    "twin_better_transferred": 0,
+    "notes": [
+      "khong hoi phuc — ca nay bi cat cut, dung nhet vao trung binh MTTR"
+    ]
+  },
+  "cleanup": {
+    "agent_undos": [],
+    "fault_revert": [
+      {
+        "fault_id": "F3-checkoutservice-podkill",
+        "target": "checkoutservice",
+        "ready": true
+      }
+    ],
+    "clean_after": true,
+    "problems_after": []
+  }
+}

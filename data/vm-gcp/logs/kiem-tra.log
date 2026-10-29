@@ -1,0 +1,54 @@
+=== 03:50:49 cho he thong lang 360s
+=== 03:56:49 smoke_snapshot
+  paymentservice-7c7876fcd9-hk4wg: cpu 0.001 cores, mem 43Mi
+  emailservice-5774686b8c-68stv: cpu 0.002 cores, mem 37Mi
+======================================================================
+do dai: 3540 ky tu, uoc luong 885 token
+
+da ghi: /home/kltn/XAI-microservices-demo/data/runs/20261027-035651_baseline.json
+
+CONG CHAN PHASE 1: DAT — he thong khoe manh, diff sach.
+=== 03:56:51 dung twin, do CPU moi 30s trong 6 phut
+  RAM node con trong (truoc khi dung): 13808 MiB
+KHONG DUNG DUOC: twin chua san sang sau 420s. twin: 6/12 pod san sang, RAM 206 MiB, chua san sang: loadgenerator-66db5f8bf7-ks5s8, paymentservice-68d6f9c69b-j9q7w, productcatalogservice-8468546898-xk8rv, recommendationservice-5cdb7bd59c-g6g6r, redis-cart-788fbddc7-dlvzw, shippingservice-768bf5c46b-8j7ff. Kiem tra bang: kubectl get pods -n twin
+04:03:57 boutique-control-plane   289m   7%    3546Mi   22%   
+04:04:27 boutique-control-plane   293m   7%    3559Mi   22%   
+04:04:57 boutique-control-plane   285m   7%    3566Mi   22%   
+04:05:27 boutique-control-plane   283m   7%    3571Mi   22%   
+04:05:58 boutique-control-plane   284m   7%    3569Mi   22%   
+04:06:28 boutique-control-plane   310m   7%    3603Mi   22%   
+04:06:58 boutique-control-plane   280m   7%    3604Mi   22%   
+04:07:28 boutique-control-plane   296m   7%    3608Mi   22%   
+04:07:58 boutique-control-plane   279m   6%    3615Mi   22%   
+04:08:28 boutique-control-plane   283m   7%    3589Mi   22%   
+04:08:58 boutique-control-plane   265m   6%    3592Mi   22%   
+04:09:28 boutique-control-plane   272m   6%    3601Mi   22%   
+--- top pod twin
+emailservice-58457d6d58-fnf42      2m    36Mi   
+frontend-7cc65b45c6-5bsg4          1m    11Mi   
+currencyservice-7b677fb6ff-qbbcq   1m    45Mi   
+checkoutservice-597fb468bd-vb2v5   1m    10Mi   
+cartservice-9479b6c-7jwfq          1m    43Mi   
+  RAM node con trong (sau khi xoa): 12788 MiB
+  tra lai: 0 MiB
+=== 04:10:10 cho 360s cho cua so sach roi chay guard_check
+Anh nen: 20261027-035651_baseline.json (2026-10-27 03:56:51, 14 canh)
+
+=== precondition ===
+  DAT  {"took_s": 0.01, "blocked_by": "precondition", "checks": [{"source": "code", "kind": "replicas_gte", "target": "currencyservice", "expected": "1", "actual": "0", "ok": false}]}
+
+=== drift ===
+  DAT  {"blocked_by": "drift", "drift": ["shippingservice.replicas: 1 -> 2"], "target_untouched": true}
+
+=== recovered ===
+  DAT  {"blocked_by": "recovered", "reason": "production da tu khoe lai trong luc kiem chung tren twin (0 canh loi, 0 canh cham, 0 canh thieu), khong ap nua", "target_untouched": true}
+
+=== undo ===
+  da ap: tran CPU 200m -> 10m (yeu cau 10m)
+  cho 300s roi do lai production...
+  DAT  {"verdict": "worse", "reason": "xau di o frontend", "auto_undo": {"action": "undo_adjust_resources", "target": "productcatalogservice", "namespace": "default", "applied": true, "verified": true, "detail": "tran CPU ve lai 200m (yeu cau 200m)", "undo_kind": "none", "undo_args": {}, "error": "", "took_s": 0.0, "ok": true}, "cpu_limit_after": "200m", "cpu_limit_before": "200m"}
+
+He thong sach sau khi thu: True
+Da ghi: /home/kltn/XAI-microservices-demo/data/guard_check/20261027-042639_guard_check.json
+4/4 dat
+=== 04:26:39 XONG

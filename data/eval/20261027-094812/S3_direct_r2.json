@@ -1,0 +1,269 @@
+{
+  "case_id": "S3_direct_r2",
+  "run_id": "20261027-094812",
+  "scenario": "S3",
+  "mode": "direct",
+  "repeat": 2,
+  "model": "gpt-4.1-mini",
+  "code": {
+    "code_sha": "d3f810e77fec9040",
+    "n_files": 50,
+    "git_head": "956ba076",
+    "git_dirty": true,
+    "prompt_version": "v6",
+    "model": "gpt-4.1-mini"
+  },
+  "baseline_source": "20261027-094813_baseline-clean.json (14 canh)",
+  "injected_at": 1793128004.9232144,
+  "injected_at_human": "2026-10-27 19:06:44",
+  "ground_truth": [
+    {
+      "fault_id": "F3-checkoutservice-podkill",
+      "target_service": "checkoutservice",
+      "fault_type": "pod_kill",
+      "params": {
+        "pod": "checkoutservice-777dff667-gmhxg"
+      },
+      "expected_propagation": [
+        "frontend"
+      ],
+      "correct_action_class": "easy",
+      "correct_actions": [
+        "no_action"
+      ],
+      "injected_at": 1793128004.9232144,
+      "injected_at_human": "2026-10-27 19:06:44"
+    }
+  ],
+  "settle_seconds": 300,
+  "errors": [],
+  "report": {
+    "run_id": "S3_direct_r2",
+    "mode": "direct",
+    "namespace": "default",
+    "started_at": 1793128124.9590547,
+    "started_at_human": "2026-10-27 19:08:44",
+    "took_s": 0.86,
+    "rounds_used": 1,
+    "max_rounds": 3,
+    "baseline_source": "do ben goi truyen vao",
+    "has_baseline": true,
+    "healthy_at_end": true,
+    "stop_reason": "he thong da khoe manh",
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "actions_applied": 0,
+    "actions_rejected_by_twin": 0,
+    "guards": false,
+    "blocked_by_precondition": 0,
+    "drift_checks": 0,
+    "blocked_by_drift": 0,
+    "blocked_recovered": 0,
+    "auto_undos": 0,
+    "rounds": [
+      {
+        "round_no": 1,
+        "snapshot_label": "agent-S3_direct_r2-r1",
+        "snapshot_fingerprint": "5b93c8b14dc6ae19",
+        "diff_summary": "0 canh loi, 0 canh cham, 0 canh thieu",
+        "healthy": true,
+        "observed_at": 1793128125.7431037,
+        "red": {
+          "productcatalogservice": {
+            "request_rate": 15.3228,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "cartservice": {
+            "request_rate": 2.7193,
+            "error_rate": 0.0,
+            "p95_ms": 0.99,
+            "source": "client"
+          },
+          "currencyservice": {
+            "request_rate": 8.4561,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "emailservice": {
+            "request_rate": 0.1053,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "paymentservice": {
+            "request_rate": 0.1053,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "shippingservice": {
+            "request_rate": 0.8211,
+            "error_rate": 0.0,
+            "p95_ms": 0.48,
+            "source": "client"
+          },
+          "adservice": {
+            "request_rate": 1.5684,
+            "error_rate": 0.0,
+            "p95_ms": 0.97,
+            "source": "client"
+          },
+          "checkoutservice": {
+            "request_rate": 0.1078,
+            "error_rate": 0.0,
+            "p95_ms": 83.83,
+            "source": "server"
+          },
+          "recommendationservice": {
+            "request_rate": 2.0,
+            "error_rate": 0.0,
+            "p95_ms": 1.95,
+            "source": "server"
+          },
+          "frontend": {
+            "request_rate": 3.0316,
+            "error_rate": 0.0,
+            "p95_ms": 17.46,
+            "source": "server"
+          }
+        },
+        "reasoning_ran": false,
+        "explanation": null,
+        "reasoning_ok": false,
+        "reasoning_error": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "chosen_action": null,
+        "risk_class": "",
+        "twin_verdict": null,
+        "twin_used": false,
+        "action_result": null,
+        "promoted": false,
+        "skipped_reason": "",
+        "guards": false,
+        "precheck": [],
+        "drift_checked": false,
+        "drift": [],
+        "blocked_by": "",
+        "watch": null,
+        "auto_undo": null,
+        "started_at": 1793128124.9598455,
+        "took_s": 0.86
+      }
+    ],
+    "saved_to": "/home/kltn/XAI-microservices-demo/data/agent_runs/20261027-190845_direct_S3_direct_r2.json"
+  },
+  "final_red": {
+    "productcatalogservice": {
+      "request_rate": 15.3228,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "cartservice": {
+      "request_rate": 2.7193,
+      "error_rate": 0.0,
+      "p95_ms": 0.99,
+      "source": "client"
+    },
+    "currencyservice": {
+      "request_rate": 8.4561,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "emailservice": {
+      "request_rate": 0.1053,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "paymentservice": {
+      "request_rate": 0.1053,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "shippingservice": {
+      "request_rate": 0.8211,
+      "error_rate": 0.0,
+      "p95_ms": 0.48,
+      "source": "client"
+    },
+    "adservice": {
+      "request_rate": 1.5684,
+      "error_rate": 0.0,
+      "p95_ms": 0.97,
+      "source": "client"
+    },
+    "checkoutservice": {
+      "request_rate": 0.1082,
+      "error_rate": 0.0,
+      "p95_ms": 83.8,
+      "source": "server"
+    },
+    "recommendationservice": {
+      "request_rate": 2.0,
+      "error_rate": 0.0,
+      "p95_ms": 1.95,
+      "source": "server"
+    },
+    "frontend": {
+      "request_rate": 3.0316,
+      "error_rate": 0.0,
+      "p95_ms": 17.46,
+      "source": "server"
+    }
+  },
+  "outcome": {
+    "scenario": "S3",
+    "mode": "direct",
+    "repeat": 2,
+    "run_id": "S3_direct_r2",
+    "root_cause_correct": null,
+    "propagation_jaccard": null,
+    "fault_type_correct": null,
+    "action_correct": null,
+    "predicted_root": "",
+    "expected_root": "",
+    "recovered": true,
+    "mttr_s": 120.8,
+    "censored_at_s": null,
+    "harmful_actions": 0,
+    "wasted_actions": 0,
+    "helpful_actions": 0,
+    "unknown_effect_actions": 0,
+    "action_effects": [],
+    "rounds_used": 1,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 0.0,
+    "took_s": 0.86,
+    "actions_rejected_by_twin": 0,
+    "blocked_by_precondition": 0,
+    "drift_checks": 0,
+    "blocked_by_drift": 0,
+    "blocked_recovered": 0,
+    "auto_undos": 0,
+    "twin_better": 0,
+    "twin_better_transferred": 0,
+    "notes": [
+      "khong vong nao chan doan thanh cong"
+    ]
+  },
+  "cleanup": {
+    "agent_undos": [],
+    "fault_revert": [
+      {
+        "fault_id": "F3-checkoutservice-podkill",
+        "target": "checkoutservice",
+        "ready": true
+      }
+    ],
+    "clean_after": true,
+    "problems_after": []
+  }
+}

@@ -1,0 +1,393 @@
+Kich ban: S1, S4, S5
+Moi kich ban 2 hanh dong x 2 moi truong = 4 lan thu
+Uoc tinh: 180 phut
+
+======================================================================
+PHAN 1: TWIN
+======================================================================
+  dung twin...
+  twin: 12/12 pod san sang, RAM 339 MiB
+  cho 330s cho bo sinh tai trong twin am len...
+    cho 330s (bo sinh tai am len)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+  twin co luu luong tren 10 service, frontend 2.98 req/s
+
+  --- S1 / twin / hanh dong dung: rollback ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: BETTER — tot len o frontend, productcatalogservice
+  frontend: loi 1.6% -> 0.7%, p95 30000.0ms -> 23.1ms (-100%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 9750.0ms -> 0.5ms (-100%)
+  cartservice: loi 0.0% -> 0.0%, p95 1.0ms -> 1.0ms (-2%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 29000.0ms -> 9.9ms (-100%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+
+  --- S1 / twin / hanh dong sai: scale_up ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: NO_CHANGE — moi thay doi deu duoi nguong nhieu tu nhien
+  frontend: loi 4.4% -> 3.9%, p95 30000.0ms -> 30000.0ms (+0%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 9750.0ms -> 9750.0ms (+0%)
+  cartservice: loi 0.0% -> 0.0%, p95 1.6ms -> 1.6ms (+0%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 28000.0ms -> 30000.0ms (+7%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+2%)
+
+  --- S4 / twin / hanh dong dung: adjust_resources ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: BETTER — tot len o frontend, cartservice
+  frontend: loi 0.0% -> 0.0%, p95 1619.9ms -> 21.8ms (-99%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (-2%)
+  cartservice: loi 0.0% -> 0.0%, p95 212.5ms -> 1.0ms (-100%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 22.3ms -> 9.9ms (-56%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+
+  --- S4 / twin / hanh dong sai: restart_pod ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: NO_CHANGE — moi thay doi deu duoi nguong nhieu tu nhien
+  frontend: loi 0.0% -> 0.0%, p95 1495.2ms -> 1591.7ms (+6%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+  cartservice: loi 0.0% -> 0.0%, p95 215.4ms -> 209.2ms (-3%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 14.9ms -> 24.6ms (+66%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+2%)
+
+  --- S5 / twin / hanh dong dung: adjust_resources ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: BETTER — tot len o frontend, cartservice
+  frontend: loi 0.0% -> 0.0%, p95 473.2ms -> 18.2ms (-96%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (-2%)
+  cartservice: loi 0.0% -> 0.0%, p95 1.6ms -> 1.0ms (-36%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 362.5ms -> 18.0ms (-95%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+
+  --- S5 / twin / hanh dong sai: restart_pod ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: WORSE — xau di o cartservice
+  frontend: loi 0.0% -> 1.6%, p95 460.3ms -> 495.6ms (+8%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+  cartservice: loi 0.0% -> 0.0%, p95 1.2ms -> 1.4ms (+16%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 366.7ms -> 331.2ms (-10%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+
+  xoa twin...
+  da xoa.
+
+======================================================================
+PHAN 2: PRODUCTION
+======================================================================
+
+  --- S1 / production / hanh dong dung: rollback ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: BETTER — tot len o frontend, productcatalogservice
+  frontend: loi 9.3% -> 1.1%, p95 30000.0ms -> 23.0ms (-100%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 9750.0ms -> 0.5ms (-100%)
+  cartservice: loi 0.0% -> 0.0%, p95 1.6ms -> 1.0ms (-40%)
+  checkoutservice: loi 0.0% -> 3.0%, p95 9750.0ms -> 16.0ms (-100%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+
+  --- S1 / production / hanh dong sai: scale_up ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: NO_CHANGE — moi thay doi deu duoi nguong nhieu tu nhien
+  frontend: loi 2.2% -> 3.0%, p95 30000.0ms -> 30000.0ms (+0%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 9750.0ms -> 9750.0ms (+0%)
+  cartservice: loi 0.0% -> 0.0%, p95 1.8ms -> 1.5ms (-17%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 29000.0ms -> 30000.0ms (+3%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+
+  --- S4 / production / hanh dong dung: adjust_resources ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: BETTER — tot len o frontend, cartservice
+  frontend: loi 0.0% -> 0.0%, p95 1737.9ms -> 24.1ms (-99%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (-2%)
+  cartservice: loi 0.0% -> 0.0%, p95 219.3ms -> 1.6ms (-99%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 19.4ms -> 18.2ms (-6%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (-4%)
+
+  --- S4 / production / hanh dong sai: restart_pod ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: NO_CHANGE — moi thay doi deu duoi nguong nhieu tu nhien
+  frontend: loi 0.0% -> 0.0%, p95 1701.0ms -> 1620.1ms (-5%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+  cartservice: loi 0.0% -> 0.0%, p95 223.8ms -> 206.7ms (-8%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 21.2ms -> 19.0ms (-11%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+
+  --- S5 / production / hanh dong dung: adjust_resources ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: BETTER — tot len o frontend, cartservice
+  frontend: loi 0.0% -> 0.0%, p95 479.6ms -> 20.0ms (-96%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+  cartservice: loi 0.0% -> 0.0%, p95 1.8ms -> 1.0ms (-46%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 477.5ms -> 16.4ms (-97%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+
+  --- S5 / production / hanh dong sai: restart_pod ---
+    cho 330s (trieu chung on dinh)...
+      con 300s
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    cho 300s (day mot cua so quan sat)...
+      con 270s
+      con 240s
+      con 210s
+      con 180s
+      con 150s
+      con 120s
+      con 90s
+      con 60s
+      con 30s
+    PHAN QUYET: NO_CHANGE — moi thay doi deu duoi nguong nhieu tu nhien
+  frontend: loi 0.0% -> 0.0%, p95 460.2ms -> 460.3ms (+0%)
+  productcatalogservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+  cartservice: loi 0.0% -> 0.0%, p95 1.0ms -> 1.1ms (+12%)
+  checkoutservice: loi 0.0% -> 0.0%, p95 416.7ms -> 246.6ms (-41%)
+  paymentservice: loi 0.0% -> 0.0%, p95 0.5ms -> 0.5ms (+0%)
+
+======================================================================
+TWIN FIDELITY
+======================================================================
+  S1 dung  rollback           twin=better     production=better     KHOP
+  S1 sai   scale_up           twin=no_change  production=no_change  KHOP
+  S4 dung  adjust_resources   twin=better     production=better     KHOP
+  S4 sai   restart_pod        twin=no_change  production=no_change  KHOP
+  S5 dung  adjust_resources   twin=better     production=better     KHOP
+  S5 sai   restart_pod        twin=worse      production=no_change  LECH
+
+  TWIN FIDELITY: 83.3%  (5/6 lan khop)
+  Fidelity duoi 100% la KET QUA NGHIEN CUU, khong phai that bai.
+  Bao cao trung thuc con so nay va giai thich cho lech (muc 10 KLTN.md).
+
+da ghi: /home/kltn/XAI-microservices-demo/data/fidelity/20261027-071231_fidelity.json

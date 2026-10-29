@@ -1,0 +1,55 @@
+{
+  "precondition": {
+    "pass": true,
+    "took_s": 0.01,
+    "blocked_by": "precondition",
+    "checks": [
+      {
+        "source": "code",
+        "kind": "replicas_gte",
+        "target": "currencyservice",
+        "expected": "1",
+        "actual": "0",
+        "ok": false
+      }
+    ]
+  },
+  "drift": {
+    "pass": true,
+    "blocked_by": "drift",
+    "drift": [
+      "shippingservice.replicas: 1 -> 2"
+    ],
+    "target_untouched": true
+  },
+  "recovered": {
+    "pass": true,
+    "blocked_by": "recovered",
+    "reason": "production da tu khoe lai trong luc kiem chung tren twin (0 canh loi, 0 canh cham, 0 canh thieu), khong ap nua",
+    "target_untouched": true
+  },
+  "undo": {
+    "pass": true,
+    "verdict": "worse",
+    "reason": "xau di o frontend",
+    "auto_undo": {
+      "action": "undo_adjust_resources",
+      "target": "productcatalogservice",
+      "namespace": "default",
+      "applied": true,
+      "verified": true,
+      "detail": "tran CPU ve lai 200m (yeu cau 200m)",
+      "undo_kind": "none",
+      "undo_args": {},
+      "error": "",
+      "took_s": 0.0,
+      "ok": true
+    },
+    "cpu_limit_after": "200m",
+    "cpu_limit_before": "200m"
+  },
+  "_clean_after": {
+    "pass": true,
+    "problems": []
+  }
+}

@@ -1,0 +1,308 @@
+{
+  "case_id": "S3_baseline_r1",
+  "run_id": "20261027-071311",
+  "scenario": "S3",
+  "mode": "baseline",
+  "repeat": 1,
+  "model": "gpt-4.1-mini",
+  "code": {
+    "code_sha": "eba07a9b3cc929aa",
+    "n_files": 50,
+    "git_head": "956ba076",
+    "git_dirty": true,
+    "prompt_version": "v6",
+    "model": "gpt-4.1-mini"
+  },
+  "baseline_source": "20261027-072236_baseline-clean.json (14 canh)",
+  "injected_at": 1793085757.8350112,
+  "injected_at_human": "2026-10-27 07:22:37",
+  "ground_truth": [
+    {
+      "fault_id": "F3-checkoutservice-podkill",
+      "target_service": "checkoutservice",
+      "fault_type": "pod_kill",
+      "params": {
+        "pod": "checkoutservice-777dff667-jp5p7"
+      },
+      "expected_propagation": [
+        "frontend"
+      ],
+      "correct_action_class": "easy",
+      "correct_actions": [
+        "no_action"
+      ],
+      "injected_at": 1793085757.8350112,
+      "injected_at_human": "2026-10-27 07:22:37"
+    }
+  ],
+  "settle_seconds": 300,
+  "errors": [],
+  "report": {
+    "run_id": "S3_baseline_r1",
+    "mode": "baseline",
+    "namespace": "default",
+    "started_at": 1793085877.8512323,
+    "took_s": 91.63,
+    "rounds_used": 2,
+    "max_rounds": 0,
+    "baseline_source": "20261027-072236_baseline-clean.json (14 canh)",
+    "has_baseline": true,
+    "healthy_at_end": true,
+    "stop_reason": "he thong tu hoi phuc",
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "actions_applied": 0,
+    "actions_rejected_by_twin": 0,
+    "gave_up_at": null,
+    "rounds": [
+      {
+        "round_no": 1,
+        "snapshot_label": "eval-S3_baseline_r1-r1",
+        "observed_at": 1793085878.6084826,
+        "diff_summary": "0 canh loi, 1 canh cham, 0 canh thieu",
+        "healthy": false,
+        "red": {
+          "productcatalogservice": {
+            "request_rate": 15.4246,
+            "error_rate": 0.0,
+            "p95_ms": 0.48,
+            "source": "server"
+          },
+          "cartservice": {
+            "request_rate": 2.7509,
+            "error_rate": 0.0,
+            "p95_ms": 0.98,
+            "source": "client"
+          },
+          "currencyservice": {
+            "request_rate": 8.1228,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "emailservice": {
+            "request_rate": 0.1298,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "paymentservice": {
+            "request_rate": 0.1298,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "shippingservice": {
+            "request_rate": 0.8105,
+            "error_rate": 0.0,
+            "p95_ms": 0.49,
+            "source": "client"
+          },
+          "adservice": {
+            "request_rate": 1.6105,
+            "error_rate": 0.0,
+            "p95_ms": 0.97,
+            "source": "client"
+          },
+          "checkoutservice": {
+            "request_rate": 0.125,
+            "error_rate": 0.0,
+            "p95_ms": 12.25,
+            "source": "server"
+          },
+          "recommendationservice": {
+            "request_rate": 2.014,
+            "error_rate": 0.0,
+            "p95_ms": 1.95,
+            "source": "server"
+          },
+          "frontend": {
+            "request_rate": 2.9825,
+            "error_rate": 0.0,
+            "p95_ms": 19.19,
+            "source": "server"
+          }
+        },
+        "reasoning_ran": false
+      },
+      {
+        "round_no": 2,
+        "snapshot_label": "eval-S3_baseline_r1-r2",
+        "observed_at": 1793085969.419399,
+        "diff_summary": "0 canh loi, 0 canh cham, 0 canh thieu",
+        "healthy": true,
+        "red": {
+          "productcatalogservice": {
+            "request_rate": 15.1789,
+            "error_rate": 0.0,
+            "p95_ms": 0.48,
+            "source": "server"
+          },
+          "cartservice": {
+            "request_rate": 2.7123,
+            "error_rate": 0.0,
+            "p95_ms": 0.99,
+            "source": "client"
+          },
+          "currencyservice": {
+            "request_rate": 8.0702,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "emailservice": {
+            "request_rate": 0.1263,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "paymentservice": {
+            "request_rate": 0.1263,
+            "error_rate": 0.0,
+            "p95_ms": 0.47,
+            "source": "server"
+          },
+          "shippingservice": {
+            "request_rate": 0.8737,
+            "error_rate": 0.0,
+            "p95_ms": 0.48,
+            "source": "client"
+          },
+          "adservice": {
+            "request_rate": 1.4877,
+            "error_rate": 0.0,
+            "p95_ms": 0.98,
+            "source": "client"
+          },
+          "checkoutservice": {
+            "request_rate": 0.1202,
+            "error_rate": 0.0,
+            "p95_ms": 12.02,
+            "source": "server"
+          },
+          "recommendationservice": {
+            "request_rate": 1.9544,
+            "error_rate": 0.0,
+            "p95_ms": 1.95,
+            "source": "server"
+          },
+          "frontend": {
+            "request_rate": 2.9439,
+            "error_rate": 0.0,
+            "p95_ms": 19.19,
+            "source": "server"
+          }
+        },
+        "reasoning_ran": false
+      }
+    ]
+  },
+  "final_red": {
+    "productcatalogservice": {
+      "request_rate": 15.1789,
+      "error_rate": 0.0,
+      "p95_ms": 0.48,
+      "source": "server"
+    },
+    "cartservice": {
+      "request_rate": 2.7123,
+      "error_rate": 0.0,
+      "p95_ms": 0.99,
+      "source": "client"
+    },
+    "currencyservice": {
+      "request_rate": 8.0702,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "emailservice": {
+      "request_rate": 0.1263,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "paymentservice": {
+      "request_rate": 0.1263,
+      "error_rate": 0.0,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "shippingservice": {
+      "request_rate": 0.8737,
+      "error_rate": 0.0,
+      "p95_ms": 0.48,
+      "source": "client"
+    },
+    "adservice": {
+      "request_rate": 1.4877,
+      "error_rate": 0.0,
+      "p95_ms": 0.98,
+      "source": "client"
+    },
+    "checkoutservice": {
+      "request_rate": 0.1202,
+      "error_rate": 0.0,
+      "p95_ms": 12.02,
+      "source": "server"
+    },
+    "recommendationservice": {
+      "request_rate": 1.9544,
+      "error_rate": 0.0,
+      "p95_ms": 1.95,
+      "source": "server"
+    },
+    "frontend": {
+      "request_rate": 2.9439,
+      "error_rate": 0.0,
+      "p95_ms": 19.19,
+      "source": "server"
+    }
+  },
+  "outcome": {
+    "scenario": "S3",
+    "mode": "baseline",
+    "repeat": 1,
+    "run_id": "S3_baseline_r1",
+    "root_cause_correct": null,
+    "propagation_jaccard": null,
+    "fault_type_correct": null,
+    "action_correct": null,
+    "predicted_root": "",
+    "expected_root": "",
+    "recovered": true,
+    "mttr_s": 211.6,
+    "censored_at_s": null,
+    "harmful_actions": 0,
+    "wasted_actions": 0,
+    "helpful_actions": 0,
+    "unknown_effect_actions": 0,
+    "action_effects": [],
+    "rounds_used": 2,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 0.0,
+    "took_s": 91.63,
+    "actions_rejected_by_twin": 0,
+    "blocked_by_precondition": 0,
+    "drift_checks": 0,
+    "blocked_by_drift": 0,
+    "blocked_recovered": 0,
+    "auto_undos": 0,
+    "twin_better": 0,
+    "twin_better_transferred": 0,
+    "notes": []
+  },
+  "cleanup": {
+    "agent_undos": [],
+    "fault_revert": [
+      {
+        "fault_id": "F3-checkoutservice-podkill",
+        "target": "checkoutservice",
+        "ready": true
+      }
+    ],
+    "clean_after": true,
+    "problems_after": []
+  }
+}
