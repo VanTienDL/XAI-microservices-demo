@@ -163,6 +163,10 @@ def main() -> int:
     ap.add_argument("--baseline-file", default=None,
                     help="ghim mot file anh nen cho moi buoi, thay vi chup nen moi "
                          "moi buoi; dung khi may khong khoi dong lai giua cac buoi")
+    ap.add_argument("--hard-actions", default="",
+                    help="hanh dong bi ep len muc hard (bat buoc qua twin), cach nhau "
+                         "bang dau phay; vi du adjust_resources. Mac dinh theo Bang 2 "
+                         "de cuong")
     ap.add_argument("--allow-code-change", action="store_true",
                     help="cho resume du code/prompt/model da doi so voi luc mo phien; "
                          "mac dinh tu choi vi hai nua phien do bang hai thuoc khac nhau")
@@ -194,6 +198,7 @@ def main() -> int:
         baseline_file=args.baseline_file,
         baseline_repeats=args.baseline_repeats,
         allow_code_change=args.allow_code_change,
+        hard_actions=tuple(a.strip() for a in args.hard_actions.split(",") if a.strip()),
     )
 
     code = runner.run_all(limit=args.limit, budget_minutes=args.budget_minutes)

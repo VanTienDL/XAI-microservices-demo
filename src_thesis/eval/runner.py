@@ -35,7 +35,12 @@ import time
 import traceback
 from pathlib import Path
 
-from src_thesis.agent.actions import ActionExecutor, ActionResult
+from src_thesis.agent.actions import (
+    ActionExecutor,
+    ActionResult,
+    extra_hard_actions,
+    set_extra_hard_actions,
+)
 from src_thesis.agent.react_loop import ReactAgent, compact_red
 from src_thesis.eval import metrics as M
 from src_thesis.eval.preflight import (
@@ -154,6 +159,7 @@ class EvalRunner:
         baseline_file: str | None = None,
         baseline_repeats: int | None = DEFAULT_BASELINE_REPEATS,
         allow_code_change: bool = False,
+        hard_actions: tuple = (),
         log=print,
     ):
         self.run_id = run_id or time.strftime("%Y%m%d-%H%M%S")
@@ -189,8 +195,12 @@ class EvalRunner:
         # tre tuyet doi doi thi nen ghim tro thanh sai.
         self.baseline_file = baseline_file
         self.allow_code_change = allow_code_change
+        # Ep hanh dong len muc `hard` cho ca phien. Ghi vao dau van tay: hai phien
+        # khac cong vao twin la hai thi nghiem khac nhau, khong duoc resume lan nhau.
+        set_extra_hard_actions(hard_actions)
         self.fingerprint = {**code_fingerprint(), "prompt_version": PROMPT_VERSION,
-                            "model": self.model_name}
+                            "model": self.model_name,
+                            "extra_hard_actions": extra_hard_actions()}
 
     # ------------------------------------------------------------------
     # CHUAN BI
@@ -215,6 +225,9 @@ class EvalRunner:
         self.log(f"Code : {fp['code_sha']} ({fp['n_files']} file, git {fp['git_head']}"
                  f"{', CHUA COMMIT' if fp['git_dirty'] else ''}), "
                  f"prompt {fp['prompt_version']}")
+        if fp.get("extra_hard_actions"):
+            self.log(f"Ep qua twin: {', '.join(fp['extra_hard_actions'])} "
+                     f"(khac Bang 2 de cuong — thi nghiem phu)")
         session = self._load_session()
         if session is not None and not self._session_matches(session):
             return False
@@ -287,9 +300,11 @@ class EvalRunner:
 
     def _session_matches(self, session: dict) -> bool:
         """Resume chỉ được phép khi code, prompt và model y như buổi đầu."""
-        diffs = [f"{k}: {session.get(k)} -> {self.fingerprint.get(k)}"
-                 for k in ("code_sha", "prompt_version", "model")
-                 if session.get(k) != self.fingerprint.get(k)]
+        # Phien cu chua co khoa `extra_hard_actions` nghia la khong ep hanh dong nao.
+        defaults = {"extra_hard_actions": []}
+        diffs = [f"{k}: {session.get(k, defaults.get(k))} -> {self.fingerprint.get(k)}"
+                 for k in ("code_sha", "prompt_version", "model", "extra_hard_actions")
+                 if session.get(k, defaults.get(k)) != self.fingerprint.get(k)]
         if not diffs:
             return True
         self.log("Code/prompt/model DA DOI so voi luc bat dau phien:")

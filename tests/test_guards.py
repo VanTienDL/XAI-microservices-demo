@@ -487,13 +487,47 @@ def test_resume_refuses_changed_code():
 
     r = object.__new__(EvalRunner)
     r.log = lambda m: None
-    r.fingerprint = {"code_sha": "aaa", "prompt_version": "v6", "model": "m"}
+    r.fingerprint = {"code_sha": "aaa", "prompt_version": "v6", "model": "m",
+                     "extra_hard_actions": []}
     r.allow_code_change = False
+    # Phien cu chua co khoa extra_hard_actions: coi nhu khong ep hanh dong nao.
     assert r._session_matches({"code_sha": "aaa", "prompt_version": "v6", "model": "m"})
     assert not r._session_matches({"code_sha": "bbb", "prompt_version": "v6",
                                    "model": "m"})
+    assert not r._session_matches({"code_sha": "aaa", "prompt_version": "v6", "model": "m",
+                                   "extra_hard_actions": ["adjust_resources"]}), \
+        "doi cong vao twin la thi nghiem khac, khong duoc resume lan"
     r.allow_code_change = True
     assert r._session_matches({"code_sha": "bbb", "prompt_version": "v6", "model": "m"})
+
+
+def test_forced_hard_action_goes_through_twin():
+    from src_thesis.agent import actions as A
+
+    assert A.risk_of("adjust_resources") == "easy"
+    A.set_extra_hard_actions(["adjust_resources"])
+    try:
+        assert A.risk_of("adjust_resources") == "hard" and A.needs_twin("adjust_resources")
+        assert A.risk_of("scale_up") == "easy", "chi ep dung hanh dong duoc chon"
+        FakeK8s.reset()
+        FakeSnap.healthy = False
+        FakeVerifier.queues = {"twin": [HEALTHY_RED, WORSE_RED]}
+        agent = make_agent("twin_verified", act("adjust_resources",
+                                                "productcatalogservice",
+                                                {"cpu_limit": "400m"}))
+        rep = agent.run(save=False)
+        r = rep["rounds"][0]
+        assert r["twin_used"] and r["twin_verdict"]["verdict"] == "worse", r["twin_verdict"]
+        assert FakeK8s.state["default"]["productcatalogservice"]["cpu_limit"] == "200m", \
+            "twin noi te di thi khong duoc ap len he thong chinh"
+    finally:
+        A.set_extra_hard_actions([])
+    assert A.risk_of("adjust_resources") == "easy", "phai tra ve nhu cu sau phep thu"
+    try:
+        A.set_extra_hard_actions(["khong_ton_tai"])
+        raise AssertionError("ten hanh dong la phai bi tu choi")
+    except ValueError:
+        pass
 
 
 # ----------------------------------------------------------------------

@@ -437,8 +437,31 @@ class ActionExecutor:
         )
 
 
+# Hanh dong bi ep len muc `hard` cho mot phien thi nghiem rieng, KHONG doi bang
+# RISK_OF_ACTION goc. Dung cho thi nghiem phu ve cong vao twin: phien chinh cho thay
+# 17/19 hanh dong gay hai la `adjust_resources` muc thap, di vong qua twin. Ep no
+# qua twin ma giu nguyen prompt thi tach duoc dung tac dung cua cong vao twin.
+_EXTRA_HARD: set[str] = set()
+
+
+def set_extra_hard_actions(names) -> None:
+    """Đặt danh sách hành động bị ép lên mức `hard` (bắt buộc qua twin)."""
+    names = {n.strip() for n in (names or []) if n and n.strip()}
+    unknown = names - set(RISK_OF_ACTION)
+    if unknown:
+        raise ValueError(f"khong biet hanh dong: {', '.join(sorted(unknown))}")
+    _EXTRA_HARD.clear()
+    _EXTRA_HARD.update(names)
+
+
+def extra_hard_actions() -> list[str]:
+    return sorted(_EXTRA_HARD)
+
+
 def risk_of(action: str) -> str:
     """Mức rủi ro của một hành động. Không biết thì coi là `hard` cho an toàn."""
+    if action in _EXTRA_HARD:
+        return "hard"
     return RISK_OF_ACTION.get(action, "hard")
 
 
