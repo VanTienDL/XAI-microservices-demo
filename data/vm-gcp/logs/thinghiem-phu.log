@@ -1,0 +1,643 @@
+Khong co loi nao dang tiem. He thong sach.
+=== 2026-10-29 03:06:07 UTC: BAT DAU thi nghiem phu
+Phien: 20261029-030608   ghi vao /home/kltn/XAI-microservices-demo/data/eval/20261029-030608
+LLM  : openai / gpt-4.1-mini (cache TAT)
+Code : 82b42c41cffc90a5 (50 file, git 4775dae4), prompt v6
+Ep qua twin: adjust_resources (khac Bang 2 de cuong — thi nghiem phu)
+  11 pod tre hon 600s (tre nhat adservice-748f6f68d4-rds29, 411s), cho 194s
+Chup anh nen cho ca phien...
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+  nen moi: 20261029-030923_baseline-clean.json — 14 canh, 2235 span
+  so voi nen truoc (20261027-094813_baseline-clean.json):
+  canh: 14 -> 14, chung 14
+  do tre trung vi doi 1.11 lan, canh lech nhat 2.60 lan
+
+Ke hoach: 15 ca, da co 0, se chay 15
+Uoc luong: 7.8 gio
+
+
+======================================================================
+CA S1_twin_verified_r1
+======================================================================
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S1: F1 vao productcatalogservice
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  vong 2: 0 canh loi, 8 canh cham, 7 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong reroute_traffic tren productcatalogservice [medium]
+    BI CHAN: dieu kien tien quyet sai: [llm] replicas_gte productcatalogservice ky vong 2, that 1 -> SAI
+  vong 3: 0 canh loi, 9 canh cham, 7 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong scale_up tren productcatalogservice [easy]
+  theo doi vong 4: 0 canh loi, 3 canh cham, 7 canh thieu
+  theo doi vong 5: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac scale_up tren productcatalogservice: OK — so ban sao ve lai 1 (yeu cau 1)
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-68fd94db44-p49d5), kiem lai sau 10s
+  da ghi: S1_twin_verified_r1.json
+  tien do: 1/15
+
+======================================================================
+CA S5_twin_verified_r1
+======================================================================
+  1 pod tre hon 600s (tre nhat productcatalogservice-5444f9bcd7-4mxmk, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S5: F4 vao productcatalogservice
+  F4-productcatalogservice-cpu -> productcatalogservice (resource_exhaustion)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: BETTER
+  vong 2: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong restart_pod tren productcatalogservice [hard]
+    twin: NO_CHANGE
+    BI CHAN: twin phan quyet 'no_change': vua nhanh len o cartservice vua cham di o frontend, khong ben nao thang
+  vong 3: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan checkoutservice / latency
+    hanh dong adjust_resources tren checkoutservice [hard]
+    twin: BETTER
+  theo doi vong 4: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 6 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac adjust_resources tren checkoutservice: OK — tran CPU ve lai 200m (yeu cau 200m)
+  hoan tac adjust_resources tren productcatalogservice: OK — tran CPU ve lai 10m (yeu cau 10m)
+  hoan tac F4-productcatalogservice-cpu: productcatalogservice san sang = True
+  da ghi: S5_twin_verified_r1.json
+  tien do: 2/15
+
+======================================================================
+CA S6_twin_verified_r1
+======================================================================
+  2 pod tre hon 600s (tre nhat productcatalogservice-5444f9bcd7-4tw67, 3s), cho 602s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S6: combined vao None
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 3 canh loi, 3 canh cham, 7 canh thieu
+    chan doan currencyservice / crash
+    hanh dong scale_up tren currencyservice [easy]
+  vong 2: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  vong 3: 0 canh loi, 10 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong reroute_traffic tren productcatalogservice [medium]
+  theo doi vong 4: 0 canh loi, 10 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 10 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 10 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 10 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 1 canh thieu
+  hoan tac scale_up tren currencyservice: OK — so ban sao ve lai 0 (yeu cau 0)
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-68fd94db44-l4b82), kiem lai sau 10s
+  da ghi: S6_twin_verified_r1.json
+  tien do: 3/15
+
+======================================================================
+CA S1_twin_verified_r2
+======================================================================
+  2 pod tre hon 600s (tre nhat productcatalogservice-5444f9bcd7-q5hs6, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S1: F1 vao productcatalogservice
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  vong 2: 0 canh loi, 10 canh cham, 1 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong reroute_traffic tren productcatalogservice [medium]
+  vong 3: 0 canh loi, 10 canh cham, 1 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  theo doi vong 4: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 9 canh cham, 1 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 1 canh thieu
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-68fd94db44-xhjmw), kiem lai sau 10s
+  da ghi: S1_twin_verified_r2.json
+  tien do: 4/15
+
+======================================================================
+CA S5_twin_verified_r2
+======================================================================
+  1 pod tre hon 600s (tre nhat productcatalogservice-5444f9bcd7-mgjxf, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S5: F4 vao productcatalogservice
+  F4-productcatalogservice-cpu -> productcatalogservice (resource_exhaustion)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / pod_kill
+    hanh dong no_action tren productcatalogservice [easy]
+  theo doi vong 2: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 3: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 4: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac F4-productcatalogservice-cpu: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-77764666bf-xr6tr), kiem lai sau 10s
+  da ghi: S5_twin_verified_r2.json
+  tien do: 5/15
+
+======================================================================
+CA S6_twin_verified_r2
+======================================================================
+  1 pod tre hon 600s (tre nhat productcatalogservice-5444f9bcd7-cspn6, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S6: combined vao None
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 3 canh loi, 3 canh cham, 7 canh thieu
+    chan doan currencyservice / crash
+    hanh dong scale_up tren currencyservice [easy]
+  vong 2: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: NO_CHANGE
+    BI CHAN: twin phan quyet 'no_change': moi thay doi deu duoi nguong nhieu tu nhien
+  vong 3: 0 canh loi, 10 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong reroute_traffic tren productcatalogservice [medium]
+  theo doi vong 4: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac scale_up tren currencyservice: OK — so ban sao ve lai 0 (yeu cau 0)
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  da ghi: S6_twin_verified_r2.json
+  tien do: 6/15
+
+======================================================================
+CA S1_twin_verified_r3
+======================================================================
+  2 pod tre hon 600s (tre nhat productcatalogservice-5444f9bcd7-n8rnv, 3s), cho 602s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S1: F1 vao productcatalogservice
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: NO_CHANGE
+    BI CHAN: twin phan quyet 'no_change': moi thay doi deu duoi nguong nhieu tu nhien
+  vong 2: 0 canh loi, 11 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong scale_up tren productcatalogservice [easy]
+  vong 3: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong restart_pod tren productcatalogservice [hard]
+    twin: BETTER
+  theo doi vong 4: 0 canh loi, 3 canh cham, 7 canh thieu
+  theo doi vong 5: 0 canh loi, 3 canh cham, 7 canh thieu
+  theo doi vong 6: 0 canh loi, 3 canh cham, 7 canh thieu
+  theo doi vong 7: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac scale_up tren productcatalogservice: OK — so ban sao ve lai 1 (yeu cau 1)
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-66dc7bcbf8-vf7ml), kiem lai sau 10s
+  da ghi: S1_twin_verified_r3.json
+  tien do: 7/15
+
+======================================================================
+CA S5_twin_verified_r3
+======================================================================
+  1 pod tre hon 600s (tre nhat productcatalogservice-76d469484f-b9q5b, 12s), cho 593s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S5: F4 vao productcatalogservice
+  F4-productcatalogservice-cpu -> productcatalogservice (resource_exhaustion)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: BETTER
+  vong 2: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong scale_up tren productcatalogservice [easy]
+  vong 3: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan checkoutservice / latency
+    hanh dong adjust_resources tren checkoutservice [hard]
+    twin: BETTER
+  theo doi vong 4: 0 canh loi, 4 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac scale_up tren productcatalogservice: OK — so ban sao ve lai 1 (yeu cau 1)
+  hoan tac adjust_resources tren productcatalogservice: OK — tran CPU ve lai 10m (yeu cau 10m)
+  hoan tac F4-productcatalogservice-cpu: productcatalogservice san sang = True
+  da ghi: S5_twin_verified_r3.json
+  tien do: 8/15
+
+======================================================================
+CA S6_twin_verified_r3
+======================================================================
+  2 pod tre hon 600s (tre nhat productcatalogservice-76d469484f-hg7s9, 3s), cho 602s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S6: combined vao None
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 3 canh loi, 3 canh cham, 7 canh thieu
+    chan doan currencyservice / crash
+    hanh dong scale_up tren currencyservice [easy]
+  vong 2: 1 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong restart_pod tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  vong 3: 0 canh loi, 9 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: NO_CHANGE
+    BI CHAN: twin phan quyet 'no_change': moi thay doi deu duoi nguong nhieu tu nhien
+  theo doi vong 4: 0 canh loi, 10 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 9 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac scale_up tren currencyservice: OK — so ban sao ve lai 0 (yeu cau 0)
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-66dc7bcbf8-m46rg), kiem lai sau 10s
+  da ghi: S6_twin_verified_r3.json
+  tien do: 9/15
+
+======================================================================
+CA S1_twin_verified_r4
+======================================================================
+  2 pod tre hon 600s (tre nhat productcatalogservice-76d469484f-877qk, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S1: F1 vao productcatalogservice
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  vong 2: 0 canh loi, 11 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong restart_pod tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': co cho tot len nhung ti le loi tang o frontend, checkoutservice, mat don ha
+  vong 3: 0 canh loi, 10 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  theo doi vong 4: 0 canh loi, 10 canh cham, 0 canh thieu
+  theo doi vong 5: 1 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 6: 1 canh loi, 10 canh cham, 0 canh thieu
+  theo doi vong 7: 1 canh loi, 10 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 1 canh thieu
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-66dc7bcbf8-7552m), kiem lai sau 10s
+  da ghi: S1_twin_verified_r4.json
+  tien do: 10/15
+
+======================================================================
+CA S5_twin_verified_r4
+======================================================================
+  1 pod tre hon 600s (tre nhat productcatalogservice-76d469484f-xwjv5, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S5: F4 vao productcatalogservice
+  F4-productcatalogservice-cpu -> productcatalogservice (resource_exhaustion)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: BETTER
+  vong 2: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong scale_up tren productcatalogservice [easy]
+  vong 3: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: BETTER
+  theo doi vong 4: 0 canh loi, 2 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 2 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 3 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 3 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 2 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 2 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 2 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 3 canh cham, 0 canh thieu
+  hoan tac adjust_resources tren productcatalogservice: OK — tran CPU ve lai 20m (yeu cau 20m)
+  hoan tac scale_up tren productcatalogservice: OK — so ban sao ve lai 1 (yeu cau 1)
+  hoan tac adjust_resources tren productcatalogservice: OK — tran CPU ve lai 10m (yeu cau 10m)
+  hoan tac F4-productcatalogservice-cpu: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-fc84cc99f-9kb9j), kiem lai sau 10s
+  da ghi: S5_twin_verified_r4.json
+  tien do: 11/15
+
+======================================================================
+CA S6_twin_verified_r4
+======================================================================
+  1 pod tre hon 600s (tre nhat productcatalogservice-76d469484f-r2z2q, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S6: combined vao None
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 3 canh loi, 3 canh cham, 7 canh thieu
+    chan doan currencyservice / crash
+    hanh dong scale_up tren currencyservice [easy]
+  vong 2: 1 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong restart_pod tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': co cho tot len nhung ti le loi tang o frontend, checkoutservice, mat don ha
+  vong 3: 0 canh loi, 10 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  theo doi vong 4: 0 canh loi, 10 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac scale_up tren currencyservice: OK — so ban sao ve lai 0 (yeu cau 0)
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-66dc7bcbf8-kjr2d), kiem lai sau 10s
+  da ghi: S6_twin_verified_r4.json
+  tien do: 12/15
+
+======================================================================
+CA S1_twin_verified_r5
+======================================================================
+  2 pod tre hon 600s (tre nhat productcatalogservice-76d469484f-bhg7w, 12s), cho 593s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S1: F1 vao productcatalogservice
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: NO_CHANGE
+    BI CHAN: twin phan quyet 'no_change': moi thay doi deu duoi nguong nhieu tu nhien
+  vong 2: 0 canh loi, 11 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong scale_up tren productcatalogservice [easy]
+  vong 3: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  theo doi vong 4: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 9 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac scale_up tren productcatalogservice: OK — so ban sao ve lai 1 (yeu cau 1)
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-66dc7bcbf8-z4pw5), kiem lai sau 10s
+  da ghi: S1_twin_verified_r5.json
+  tien do: 13/15
+
+======================================================================
+CA S5_twin_verified_r5
+======================================================================
+  1 pod tre hon 600s (tre nhat productcatalogservice-76d469484f-gwg4w, 13s), cho 592s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S5: F4 vao productcatalogservice
+  F4-productcatalogservice-cpu -> productcatalogservice (resource_exhaustion)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: BETTER
+  vong 2: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong scale_up tren productcatalogservice [easy]
+  vong 3: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan checkoutservice / latency
+    hanh dong restart_pod tren checkoutservice [hard]
+    twin: BETTER
+  theo doi vong 4: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 5: 0 canh loi, 3 canh cham, 0 canh thieu
+  theo doi vong 6: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 7: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac adjust_resources tren productcatalogservice: OK — tran CPU ve lai 10m (yeu cau 10m)
+  hoan tac F4-productcatalogservice-cpu: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-fc84cc99f-clvdw), kiem lai sau 10s
+  da ghi: S5_twin_verified_r5.json
+  tien do: 14/15
+
+======================================================================
+CA S6_twin_verified_r5
+======================================================================
+  1 pod tre hon 600s (tre nhat productcatalogservice-76d469484f-gxg4s, 12s), cho 593s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S6: combined vao None
+  F1-productcatalogservice-latency -> productcatalogservice (latency)
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 3 canh loi, 3 canh cham, 7 canh thieu
+    chan doan currencyservice / crash
+    hanh dong scale_up tren currencyservice [easy]
+  vong 2: 0 canh loi, 5 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong adjust_resources tren productcatalogservice [hard]
+    twin: WORSE
+    BI CHAN: twin phan quyet 'worse': xau di o frontend
+  vong 3: 0 canh loi, 11 canh cham, 0 canh thieu
+    chan doan productcatalogservice / latency
+    hanh dong reroute_traffic tren productcatalogservice [medium]
+  theo doi vong 4: 1 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 5: 1 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 6: 1 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 7: 1 canh loi, 11 canh cham, 0 canh thieu
+  theo doi vong 8: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 9: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 10: 0 canh loi, 5 canh cham, 0 canh thieu
+  theo doi vong 11: 0 canh loi, 5 canh cham, 0 canh thieu
+  hoan tac scale_up tren currencyservice: OK — so ban sao ve lai 0 (yeu cau 0)
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  hoan tac F1-productcatalogservice-latency: productcatalogservice san sang = True
+  chua sach (1 pod chua san sang: productcatalogservice-66dc7bcbf8-qnwsk), kiem lai sau 10s
+  da ghi: S6_twin_verified_r5.json
+  tien do: 15/15
+
+Xong 15/15 ca. Tong hop: /home/kltn/XAI-microservices-demo/data/eval/20261029-030608/index.json
+
+Phien 20261029-030608   model gpt-4.1-mini
+Anh nen: 20261029-030923_baseline-clean.json (14 canh)
+So ca  : 15
+Nguong harmful: loi tang >= 0.02 hoac p95 tang >= 0.2
+Nguong du lieu: chi ket luan khi >= 0.3 req/s
+
+--- twin_verified (15 ca) ---
+  chi so 1 root cause : 100.0% (do lech 0.000)
+  chi so 2 propagation: 0.818
+  chi so 3 MTTR       : khong ca nao hoi phuc
+           khong hoi phuc: 15/15 ca (bi cat cut, KHONG tinh vao trung binh tren)
+  chi so 4 harmful    : 4 (0.27 moi ca)
+  chi so 5 wasted     : 9 (0.60 moi ca)
+  bi twin chan        : 17
+  chuyen giao twin->prod: 67% tren 9 lan twin noi better
+  that bai do do lech : 0% tren 24 lan doi sanh (lech cau hinh 0, tu khoe truoc khi ap 0)
+  chan vi dieu kien   : 1   tu hoan tac: 2
+  chi so 6 token/ca    : 14730   tien/ca: $0.00743
+  thoi gian trung binh: 1611s
+
+chi so 7 twin fidelity: 83.3% (5/6) — 20261027-071231_fidelity.json
+=== 2026-10-29 16:16:52 UTC: eval_run ket thuc, ma thoat 0

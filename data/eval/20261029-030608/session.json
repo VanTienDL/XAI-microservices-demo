@@ -1,0 +1,14 @@
+{
+  "code_sha": "82b42c41cffc90a5",
+  "n_files": 50,
+  "git_head": "4775dae4",
+  "git_dirty": false,
+  "prompt_version": "v6",
+  "model": "gpt-4.1-mini",
+  "extra_hard_actions": [
+    "adjust_resources"
+  ],
+  "run_id": "20261029-030608",
+  "baseline_file": "data/runs/20261029-030923_baseline-clean.json",
+  "created_at_human": "2026-10-29 03:09:23"
+}
