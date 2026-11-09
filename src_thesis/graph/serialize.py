@@ -215,3 +215,33 @@ def describe_pods(pods: list, recent_restart_s: float = 600.0,
             f"reason={p.reason or 'n/a'}{when}"
         )
     return "\n".join(lines)
+
+
+def describe_changes(changes: list[dict], window_s: float | None = None,
+                     error: str = "") -> str:
+    """Mục CONFIGURATION CHANGES (v2): phiên bản pod template mới trong khoảng quan sát.
+
+    Chỉ ghi sự thật — số phiên bản, bao lâu trước, nguyên nhân nếu có ghi, cấu hình
+    đổi thế nào. KHÔNG kèm nhận xét kiểu "thay đổi này đáng ngờ": quyết định thay
+    đổi nào liên quan tới sự cố là việc của LLM, gợi ý ở đây là gài sẵn đáp án.
+
+    Đổi số bản sao không phải một phiên bản (đúng như Kubernetes), nên kịch bản hạ
+    service về 0 bản sao không hiện ở đây; bằng chứng của nó nằm ở POD HEALTH.
+    """
+    span = f"last {window_s / 60:.0f} min" if window_s else "observation period"
+    lines = [f"CONFIGURATION CHANGES ({span}; pod template revisions, newest first; "
+             f"replica scaling is not a revision):"]
+    if error:
+        lines.append(f"  unavailable: {error}")
+        return "\n".join(lines)
+    if not changes:
+        lines.append("  no pod template changes in this period")
+        return "\n".join(lines)
+    for c in changes:
+        cause = c.get("cause") or "not recorded"
+        cur = " (current)" if c.get("current") else ""
+        lines.append(
+            f"  {c['deployment']} revision {c['revision']}{cur}, "
+            f"{c['age_s'] / 60:.1f} min ago, from revision {c['previous_revision']}, "
+            f"cause: {cause}: {c['change']}")
+    return "\n".join(lines)

@@ -34,7 +34,9 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-from src_thesis.agent.actions import ROLLBACK_ENV_KEYS, cpu_to_millicores
+import re
+
+from src_thesis.agent.actions import cpu_to_millicores
 from src_thesis.xai.schema import ProposedAction
 
 
@@ -70,7 +72,11 @@ def _code_rules(action: ProposedAction) -> list[tuple[str, str, str]]:
     if action.action == "scale_down":
         return [("replicas_gte", t, "2")]
     if action.action == "rollback":
-        return [("env_present", t, ",".join(ROLLBACK_ENV_KEYS))]
+        # v1 doi bien EXTRA_LATENCY phai co mat — tuc luat biet san cach tiem loi.
+        # v2 chi doi dieu ma moi lenh quay lui that deu doi: co phien ban de ve.
+        p = action.params_dict()
+        return [("has_earlier_revision", t,
+                 str(p.get("to_revision") or p.get("revision") or ""))]
     if action.action == "adjust_resources":
         p = action.params_dict()
         wanted = p.get("cpu") or p.get("cpu_limit")
@@ -116,6 +122,19 @@ def _check_one(k8s, namespace: str, source: str, kind: str, target: str,
             actual = k8s.get_cpu_limit(target, namespace=namespace)
             a = cpu_to_millicores(actual)
             return res(actual, a is not None and abs(a - want) < 1e-6)
+        if kind == "has_earlier_revision":
+            history = k8s.rollout_history(target, namespace=namespace)
+            revs = [h["revision"] for h in history]
+            if len(revs) < 2:
+                return res(f"chi co {len(revs)} phien ban", False)
+            if not str(value).strip():
+                return res(f"phien ban {revs}", True)
+            m = re.search(r"\d+", str(value))
+            if not m:
+                return res("to_revision sai dang", False)
+            want = int(m.group(0))
+            return res(f"phien ban {revs}, hien tai {revs[-1]}",
+                       want in revs and want != revs[-1])
         if kind == "env_present":
             found = [k for k in str(value).split(",")
                      if k and k8s.get_env(target, k, namespace=namespace) is not None]

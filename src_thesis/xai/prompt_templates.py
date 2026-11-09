@@ -96,6 +96,13 @@ Kubernetes has already replaced it and the system is recovering on its own. Set 
 Some services are called rarely (emailservice runs only on completed orders). \
 Low or absent traffic is not evidence of failure.
 
+**CONFIGURATION CHANGES lists recent pod template revisions.**
+Each line is one revision of a deployment: its revision number, how long ago it was \
+made, the recorded cause if any, and how environment variables, CPU limits or the \
+image changed from the previous revision. Causes starting with "agent:" are your own \
+earlier actions in this incident. Treat this section as evidence like any other; a \
+listed change is not necessarily related to the incident.
+
 **Three services emit no traces of their own** (cartservice, shippingservice, \
 adservice) and redis-cart is completely invisible. Their numbers come from the \
 caller side and include network time. Never conclude that redis-cart is at fault \
@@ -113,6 +120,9 @@ one on the critical business path and mention the other in reasoning_chain.
 - Order proposed_actions with the most appropriate first.
 - params values must be concrete: replicas as an integer string ("1"), cpu_limit as \
 a Kubernetes quantity ("400m"). Words such as "increase" cannot be executed.
+- rollback reverts a deployment's pod template (environment variables, CPU, image) \
+to an earlier revision. Set param to_revision to the revision number to return to; \
+without it, rollback returns to the revision just before the current one.
 
 ## Action risk classes
 

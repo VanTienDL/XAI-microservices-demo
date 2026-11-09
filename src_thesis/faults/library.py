@@ -51,6 +51,8 @@ def inject_one(inj: FaultInjector, fault: str, target: str,
         return inj.inject_pod_kill(target)
     if fault == "F4":
         return inj.inject_cpu_throttle(target, params.get("cpu", "10m"))
+    if fault == "F5":
+        return inj.inject_bad_config(target, params["key"], params["value"])
     raise ValueError(f"khong biet loai loi {fault}")
 
 

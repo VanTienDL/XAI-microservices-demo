@@ -105,7 +105,45 @@ scenarios:
       currencyservice. Kiểm tra XAI có báo cáo được HAI nguyên nhân gốc hay chỉ
       bám lấy cái rõ nhất rồi bỏ qua cái kia.
 
+  # ------------------------------------------------------------------
+  # KỊCH BẢN GIỮ LẠI (v2) — docs/v2-dang-ky-truoc.md mục 5.
+  # KHÔNG dùng để chỉnh prompt, luật hay ngưỡng. Chỉ được chạy thử để xác nhận lỗi
+  # tạo ra triệu chứng quan sát được, và lần chạy thử đó không gọi LLM.
+  # ------------------------------------------------------------------
+
+  - id: H1
+    held_out: true
+    fault: F4
+    target: currencyservice
+    params:
+      cpu: 10m
+    wait_after_inject_s: 330
+    description: >
+      Bóp trần CPU của currencyservice xuống 10m. Cùng loại lỗi với S4, S5 nhưng ở
+      service chưa từng dùng khi chỉnh prompt; currencyservice được cả frontend lẫn
+      checkoutservice gọi.
+    expected_symptom: >
+      Cạnh tới currencyservice chậm từ cả hai phía gọi, CPU của currencyservice chạm
+      trần, lịch sử thay đổi ghi trần CPU 200m -> 10m.
+
+  - id: H2
+    held_out: true
+    fault: F5
+    target: frontend
+    params:
+      key: CURRENCY_SERVICE_ADDR
+      value: "currencyservice:7001"
+    wait_after_inject_s: 330
+    description: >
+      Triển khai cấu hình sai: frontend trỏ currencyservice sang cổng 7001 thay vì
+      7000. currencyservice vẫn khỏe và checkoutservice vẫn gọi nó bình thường; chỉ
+      đường gọi từ frontend hỏng. Tên biến không tự nói lên lỗi.
+    expected_symptom: >
+      frontend lỗi trên mọi trang cần đổi tiền tệ; checkoutservice->currencyservice
+      vẫn sạch; lịch sử thay đổi ghi CURRENCY_SERVICE_ADDR của frontend đổi cổng.
+      Chưa kiểm chứng — phải chạy thử trước khi đóng băng.
+
 # Thứ tự chạy đề nghị: S3 trước vì nó tự hồi phục và ít rủi ro nhất, rồi S2, S1,
 # S5, S4, cuối cùng S6. S4 để gần cuối vì bóp CPU của frontend là ca dễ làm web
-# không truy cập được nhất.
-recommended_order: [S3, S2, S1, S5, S4, S6]
+# không truy cập được nhất. H1, H2 (v2) chạy sau cùng trong mỗi lượt.
+recommended_order: [S3, S2, S1, S5, S4, S6, H1, H2]

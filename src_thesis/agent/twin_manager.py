@@ -27,6 +27,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from src_thesis.agent.actions import _same_fields, describe_fields_change
 from src_thesis.k8s_client import K8sClient
 
 TWIN_NAMESPACE = "twin"
@@ -55,10 +56,9 @@ TWIN_DEPLOYMENTS = [
     "shippingservice",
 ]
 
-# Những thứ load_state sao chép từ production sang twin. Cố ý KHÔNG sao image:
-# twin phải chạy đúng phiên bản đang có mặt trên production, mà image đã pin sẵn
-# trong manifest nên hai bên vốn đã giống nhau.
-COPIED_ENV_KEYS = ("EXTRA_LATENCY",)
+# Deployment KHÔNG chép cấu hình từ production: twin có bộ sinh tải riêng (cấu hình
+# trong infra/twin/loadgenerator.yaml), chép đè thì nó bắn tải vào production.
+NOT_SYNCED = ("loadgenerator",)
 
 # Ngưỡng RAM tối thiểu còn trống trong WSL trước khi cho dựng twin, tính bằng MiB.
 # Số đo thật: 14 pod của bản chính dùng khoảng 620 MiB, twin có 9 pod nhẹ hơn nên
@@ -225,17 +225,23 @@ class TwinManager:
     def load_state(self, source_namespace: str = "default") -> dict[str, dict]:
         """Áp cấu hình hiện tại của production lên twin.
 
-        Sao chép ba thứ: số bản sao, trần CPU (kèm mức yêu cầu), và các biến môi
-        trường trong `COPIED_ENV_KEYS`. Chỉ đụng vào deployment có mặt ở CẢ HAI bên
-        — twin thiếu adservice và recommendationservice nên phải bỏ qua chúng, nếu
-        không thì lỗi 404 giữa chừng và twin nạp trạng thái nửa vời.
+        Sao chép: số bản sao, và TOÀN BỘ cấu hình container — mọi biến môi trường,
+        trần và lượng xin CPU, image — trong một lần vá mỗi deployment. Bản v1 chỉ
+        chép `EXTRA_LATENCY`, nên lỗi cấu hình ở biến khác (kịch bản H2) không bao
+        giờ có mặt trên twin, và twin phán quyết trên một hệ thống KHÔNG có lỗi.
 
-        Trả về bảng những gì đã đổi, để ghi vào log thí nghiệm.
+        Giữ nguyên trên twin: ba biến quan sát (`ENV_INFRA_KEYS` trong k8s_client) và
+        bộ sinh tải (`NOT_SYNCED`). Chỉ đụng deployment có mặt ở CẢ HAI bên.
+
+        Trả về bảng những gì đã đổi, để ghi vào log thí nghiệm. Ném `RuntimeError`
+        nếu twin không chạy được cấu hình mới trong 180 giây — khi đó twin không còn
+        là bản sao của production, và không được dùng để phán quyết.
         """
         applied: dict[str, dict] = {}
         twin_deps = set(self.k8s.list_deployments(self.namespace))
+        prod_deps = set(self.k8s.list_deployments(source_namespace))
 
-        for dep in sorted(twin_deps):
+        for dep in sorted((twin_deps & prod_deps) - set(NOT_SYNCED)):
             change: dict = {}
 
             replicas = self.k8s.get_replicas(dep, namespace=source_namespace)
@@ -245,26 +251,31 @@ class TwinManager:
                 self.k8s.scale_deployment(dep, replicas, namespace=self.namespace)
                 change["replicas"] = replicas
 
-            limit = self.k8s.get_cpu_limit(dep, namespace=source_namespace)
-            request = self.k8s.get_cpu_request(dep, namespace=source_namespace)
-            if limit and limit != self.k8s.get_cpu_limit(dep, namespace=self.namespace):
-                self.k8s.restore_cpu(dep, limit, request, namespace=self.namespace)
-                change["cpu_limit"] = limit
-
-            for key in COPIED_ENV_KEYS:
-                value = self.k8s.get_env(dep, key, namespace=source_namespace)
-                current = self.k8s.get_env(dep, key, namespace=self.namespace)
-                if value == current:
-                    continue
-                if value is None:
-                    self.k8s.unset_env(dep, key, namespace=self.namespace)
-                    change[key] = None
-                else:
-                    self.k8s.set_env(dep, key, value, namespace=self.namespace)
-                    change[key] = value
+            want = self.k8s.container_spec(dep, namespace=source_namespace)
+            old = self.k8s.apply_template_fields(dep, want, namespace=self.namespace)
+            if not _same_fields(old, want):
+                change["config"] = describe_fields_change(old, want)
 
             if change:
                 applied[dep] = change
+
+        # CHO TWIN CHAY CAU HINH MOI THAT, khong chi ghi xong cau hinh.
+        #
+        # VI SAO (ban sua cua Nguyen Duc Tho, commit 944b3189): lan chay that S1 tren
+        # k3s (2026-10-07), twin chep tran CPU 500m cua production nhung node da het
+        # cho, pod moi treo Pending, va pod CU van chay cau hinh cu. Ham van tra ve
+        # "da nap", twin do va phan quyet tren mot ban sao SAI ma khong ai biet.
+        stuck = []
+        for dep in applied:
+            if not self.k8s.wait_ready(dep, timeout=180, namespace=self.namespace):
+                phases = sorted({p.phase for p in self.k8s.list_pods(self.namespace)
+                                 if p.deployment == dep and not p.ready})
+                stuck.append(f"{dep} ({', '.join(phases) or 'chua san sang'})")
+        if stuck:
+            raise RuntimeError(
+                f"twin khong nap duoc trang thai production: {'; '.join(stuck)} chua "
+                f"chay cau hinh moi sau 180s. Pending thuong la node het CPU, kiem tra: "
+                f"kubectl describe pod -n {self.namespace}")
 
         return applied
 

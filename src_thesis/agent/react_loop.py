@@ -205,6 +205,8 @@ class ReactAgent:
         dry_run: bool = False,
         baseline: ServiceGraph | None = None,
         guards: bool | None = None,
+        twin_settle_seconds: int | None = None,
+        changes_since: float | None = None,
     ):
         self.mode = mode
         self.namespace = namespace
@@ -237,6 +239,14 @@ class ReactAgent:
         # dat nhat cua phase 2: cho ngan hon cua so thi so lieu "sau" con lan trang
         # thai "truoc", va agent se ket luan nham rang hanh dong khong co tac dung.
         self.settle_seconds = settle_seconds
+        # Thoi gian quan sat RIENG tren twin (v2, thi nghiem thoi luong o de cuong).
+        # Tach khoi `settle_seconds` vi cai do con la cua so node `watch` do hanh
+        # dong gay hai tren production: doi chung thi doi ca dinh nghia chi so 4.
+        self.twin_settle_seconds = (settle_seconds if twin_settle_seconds is None
+                                    else twin_settle_seconds)
+        # Moc bat dau liet ke thay doi cau hinh trong anh chup (v2). Xem
+        # `take_snapshot(changes_since=...)`.
+        self.changes_since = changes_since
         # dry_run bo qua moi thao tac doi cluster. Dung de thu graph chay dung luong
         # ma khong dung toi he thong that.
         self.dry_run = dry_run
@@ -254,7 +264,8 @@ class ReactAgent:
 
         snap = take_snapshot(label=f"agent-{state['run_id']}-r{rnd}",
                              namespace=self.namespace,
-                             baseline=self.baseline)
+                             baseline=self.baseline,
+                             changes_since=self.changes_since)
         d = snap.to_dict()
         self._round_log.snapshot_label = d.get("label", "")
         self._round_log.snapshot_fingerprint = d.get("fingerprint", "")
@@ -368,11 +379,14 @@ class ReactAgent:
                 config_seen = capture_config(self.k8s, self.namespace)
             self.twin.load_state(source_namespace=self.namespace)
 
-            twin_exec = ActionExecutor(namespace="twin")
+            # Lich su phien ban doc tu production: `rollback` tren twin phai quay ve
+            # dung cau hinh ma no se quay ve tren production.
+            twin_exec = ActionExecutor(namespace="twin",
+                                       history_namespace=self.namespace)
             # Cho bo sinh tai trong twin am len du mot cua so, neu khong thi phep do
             # "truoc" con lan luc twin chua co luu luong.
-            time.sleep(self.settle_seconds)
-            before = self.twin_verifier.measure()
+            time.sleep(self.twin_settle_seconds)
+            before = self.twin_verifier.measure(window=self._twin_window())
 
             applied = twin_exec.apply(action)
             if not applied.ok:
@@ -381,8 +395,8 @@ class ReactAgent:
                 log.twin_verdict = v.to_dict()
                 return {"verdict": v.to_dict(), "config_seen": config_seen}
 
-            time.sleep(self.settle_seconds)
-            after = self.twin_verifier.measure()
+            time.sleep(self.twin_settle_seconds)
+            after = self.twin_verifier.measure(window=self._twin_window())
             v = self.twin_verifier.compare(before, after)
         except Exception as e:
             # Twin hong thi KHONG duoc coi la da xac nhan. Mac dinh an toan la
@@ -396,6 +410,15 @@ class ReactAgent:
 
         log.twin_verdict = v.to_dict()
         return {"verdict": v.to_dict(), "config_seen": config_seen}
+
+    def _twin_window(self) -> str:
+        """Cửa sổ đo trên twin, BẰNG đúng thời gian chờ.
+
+        Chờ 120 giây mà đo cửa sổ 5 phút thì số "sau" còn 3 phút dữ liệu từ trước
+        khi thi hành — bài học pha loãng của phase 2. Mặc định 300 giây trùng với
+        cửa sổ "5m" của v1, nên chế độ mặc định đo y như cũ.
+        """
+        return f"{int(self.twin_settle_seconds)}s"
 
     def _healthy_now(self, label: str) -> tuple[bool, str]:
         """Chụp nhanh production, trả về (đã khỏe chưa, tóm tắt). Dùng cùng luật

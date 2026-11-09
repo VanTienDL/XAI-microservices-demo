@@ -41,6 +41,9 @@ class GroundTruth:
     correct_actions: list[str]         # hành động nào được coi là đúng
     injected_at: float
     injected_at_human: str = ""
+    # v2: các nhãn loại lỗi được chấp nhận, xem `metrics.fault_type_matches`.
+    # Rỗng = chỉ chấp nhận `fault_type` (file đáp án v1).
+    accepted_fault_types: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -164,6 +167,7 @@ def _from_dict(d: dict) -> ActiveFault:
             correct_action_class=gt["correct_action_class"],
             correct_actions=gt.get("correct_actions", []),
             injected_at=gt["injected_at"],
+            accepted_fault_types=gt.get("accepted_fault_types", []),
         ),
         undo_kind=d["undo_kind"],
         undo_args=d["undo_args"],
@@ -246,6 +250,7 @@ class FaultInjector:
                 correct_action_class="hard",
                 correct_actions=["rollback"],
                 injected_at=time.time(),
+                accepted_fault_types=["latency", "configuration_error"],
             ),
             undo_kind="env",
             undo_args={"deployment": service, "key": "EXTRA_LATENCY", "old_value": old},
@@ -253,6 +258,44 @@ class FaultInjector:
         )
         self._finish(fault)
         self.k8s.set_env(service, "EXTRA_LATENCY", extra_latency, self.namespace)
+        return fault
+
+    # F5 --------------------------------------------------------------
+
+    def inject_bad_config(self, service: str, key: str, value: str) -> ActiveFault:
+        """F5 (v2) — đổi một biến cấu hình sang giá trị sai, như một lần triển khai lỗi.
+
+        Kịch bản H2 dùng nó để đổi `CURRENCY_SERVICE_ADDR` của frontend sang sai cổng:
+        frontend vẫn khởi động và vẫn qua kiểm tra sức khỏe (`/_healthz` không gọi
+        currencyservice, và `grpc.NewClient` không kết nối ngay), nhưng mọi trang cần
+        đổi tiền đều lỗi. Tên biến không tự nói ra lỗi, khác `EXTRA_LATENCY` của S1:
+        đó là chủ đích, để kiểm tra LLM có thật sự dùng lịch sử thay đổi hay chỉ đọc
+        tên biến.
+
+        Đáp án `rollback`: tăng bản sao hay CPU, khởi động lại đều sinh pod từ cùng
+        cấu hình sai. Biến phải đã tồn tại — đổi giá trị chứ không thêm biến lạ.
+        """
+        old = self.k8s.get_env(service, key, self.namespace)
+        if old is None:
+            raise ValueError(f"{service} khong co bien {key}; F5 chi doi bien da co")
+        fault = ActiveFault(
+            ground_truth=GroundTruth(
+                fault_id=f"F5-{service}-config",
+                target_service=service,
+                fault_type="configuration_error",
+                params={"key": key, "value": value, "old_value": old},
+                expected_propagation=expected_propagation(service),
+                correct_action_class="hard",
+                correct_actions=["rollback"],
+                injected_at=time.time(),
+                accepted_fault_types=["configuration_error"],
+            ),
+            undo_kind="env",
+            undo_args={"deployment": service, "key": key, "old_value": old},
+            namespace=self.namespace,
+        )
+        self._finish(fault)
+        self.k8s.set_env(service, key, value, self.namespace)
         return fault
 
     # F2 --------------------------------------------------------------
@@ -336,8 +379,11 @@ class FaultInjector:
                         "old_cpu_request": old_request},
                 expected_propagation=expected_propagation(service),
                 correct_action_class="easy",
-                correct_actions=["adjust_resources", "scale_up"],
+                # v2 them rollback: quay lui phien ban gio dua tran CPU ve truoc khi
+                # bi bop, tuc chua dung benh. Ban v1 rollback chi go EXTRA_LATENCY.
+                correct_actions=["adjust_resources", "scale_up", "rollback"],
                 injected_at=time.time(),
+                accepted_fault_types=["resource_exhaustion", "configuration_error"],
             ),
             undo_kind="cpu",
             undo_args={"deployment": service, "old_cpu": old_limit,

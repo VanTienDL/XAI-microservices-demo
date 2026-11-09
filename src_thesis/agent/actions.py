@@ -15,6 +15,14 @@ PHÂN MỨC RỦI RO (mục 7.3 KLTN.md, Bảng 2 đề cương):
 Ở chế độ `twin_verified`, mọi mức đều được đo lại sau khi áp và tự hoàn tác nếu
 production tệ đi (`react_loop._watch`). Chỉ `restart_pod` là không hoàn tác được.
 
+`rollback` TỪ v2 là quay lui phiên bản thật, như `kubectl rollout undo`: đưa env,
+CPU và image về đúng cấu hình của một phiên bản cũ trong lịch sử. Bản v1 chỉ gỡ đúng
+biến `EXTRA_LATENCY`, tức hành động biết sẵn lỗi được tiêm thế nào — không còn đúng
+nghĩa "quay lui", và không chữa được lỗi cấu hình ở biến nào khác.
+
+Mọi hành động đổi pod template đều ghi nguyên nhân `agent: <hành động>` vào lịch sử,
+để lần quan sát sau phân biệt được thay đổi do chính agent với thay đổi từ bên ngoài.
+
 CHỖ NGUY HIỂM NHẤT CỦA CẢ FILE NÀY LÀ HÀM HOÀN TÁC.
 
 Phase 2 có ba lỗi hoàn tác, cả ba cùng một tính chất: **hệ thống vẫn hỏng trong khi
@@ -40,10 +48,11 @@ niềm tin rằng nó đã sửa xong. Vì vậy mọi hàm ở đây:
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import asdict, dataclass, field
 
-from src_thesis.k8s_client import K8sClient
+from src_thesis.k8s_client import K8sClient, describe_fields_change
 from src_thesis.xai.schema import ProposedAction
 
 RISK_OF_ACTION: dict[str, str] = {
@@ -60,10 +69,6 @@ RISK_OF_ACTION: dict[str, str] = {
 # Hành động phải được twin xác nhận trước khi áp lên production (mục 7.3, 7.4).
 NEEDS_TWIN = {"restart_pod", "rollback"}
 
-# Biến môi trường mà `rollback` gỡ bỏ. Đây là các biến do người vận hành hoặc thí
-# nghiệm đặt vào, không phải cấu hình gốc của Online Boutique — gỡ chúng đưa service
-# về đúng trạng thái xuất xưởng.
-ROLLBACK_ENV_KEYS = ("EXTRA_LATENCY",)
 
 MAX_REPLICAS = 4          # tran an toan, tranh agent scale vo han
 MIN_REPLICAS = 1
@@ -105,7 +110,7 @@ class ActionResult:
     applied: bool                       # co thuc su doi gi khong
     verified: bool                      # doc lai co dung nhu yeu cau khong
     detail: str                         # mo ta cho nguoi doc
-    undo_kind: str = "none"             # none | scale | cpu | env | restart
+    undo_kind: str = "none"             # none | scale | cpu | env | template
     undo_args: dict = field(default_factory=dict)
     error: str = ""
     took_s: float = 0.0
@@ -129,9 +134,15 @@ class ActionExecutor:
     production, và kết quả twin xác nhận sẽ không nói được gì về production.
     """
 
-    def __init__(self, k8s: K8sClient | None = None, namespace: str = "default"):
+    def __init__(self, k8s: K8sClient | None = None, namespace: str = "default",
+                 history_namespace: str | None = None):
         self.k8s = k8s or K8sClient(namespace=namespace)
         self.namespace = namespace
+        # Lịch sử phiên bản mà `rollback` đọc. Trên twin PHẢI là namespace của
+        # production: twin vừa dựng có lịch sử riêng (phiên bản gốc rồi phiên bản do
+        # nạp trạng thái), "quay về phiên bản trước" trên lịch sử đó là quay về bản
+        # sạch của twin, không phải thứ agent định làm trên production.
+        self.history_namespace = history_namespace or namespace
 
     # ------------------------------------------------------------------
 
@@ -207,7 +218,7 @@ class ActionExecutor:
         if action == "restart_pod":
             return self._restart(target)
         if action == "rollback":
-            return self._rollback(target)
+            return self._rollback(target, params)
         raise ValueError(f"khong biet hanh dong '{action}'")
 
     # ------------------------------------------------------------------
@@ -276,7 +287,8 @@ class ActionExecutor:
                 detail=f"tran CPU da la {before_limit}, khong doi gi",
             )
 
-        self.k8s.set_cpu_limit(target, wanted, namespace=self.namespace)
+        self.k8s.set_cpu_limit(target, wanted, namespace=self.namespace,
+                               cause="agent: adjust_resources")
         self.k8s.wait_ready(target, timeout=180, namespace=self.namespace)
 
         actual = self.k8s.get_cpu_limit(target, namespace=self.namespace)
@@ -303,7 +315,8 @@ class ActionExecutor:
         Không hoàn tác được theo nghĩa đen: pod cũ đã chết hẳn. `undo_kind` để
         `none` cho đúng sự thật, thay vì giả vờ có đường lùi.
         """
-        self.k8s.restart_deployment(target, namespace=self.namespace)
+        self.k8s.restart_deployment(target, namespace=self.namespace,
+                                    cause="agent: restart_pod")
         self.k8s.wait_ready(target, timeout=240, namespace=self.namespace)
 
         pods = [p for p in self.k8s.list_pods(self.namespace)
@@ -318,47 +331,74 @@ class ActionExecutor:
             error="" if verified else "khong pod nao san sang sau khi khoi dong lai",
         )
 
-    def _rollback(self, target: str) -> ActionResult:
-        """Gỡ các biến môi trường do người vận hành đặt vào, đưa service về gốc.
+    def _rollback(self, target: str, params: dict) -> ActionResult:
+        """Quay lui về cấu hình của một phiên bản cũ, như `kubectl rollout undo`.
 
-        Dùng JSON Patch chứ không dùng merge patch — bài học phase 2: merge patch
-        thay cả mảng `containers` nên làm mất trường `image` và API trả 422.
-        `unset_env` trong `k8s_client` đã cài đúng cách này.
+        `to_revision` (tùy chọn) là số phiên bản đích, đọc được ở mục CONFIGURATION
+        CHANGES của ảnh chụp. Không ghi thì về phiên bản ngay trước phiên bản hiện tại.
+
+        Cấu hình đích lấy từ lịch sử của `history_namespace` (production) rồi áp
+        nguyên giá trị đó lên `namespace`, nên trên twin và trên production cùng một
+        lệnh cho ra cùng một cấu hình.
         """
-        removed, kept = [], []
-        # Nho gia tri cu cua tung bien da go, de tu hoan tac duoc khi rollback lam
-        # production te di. Ban dau rollback de undo_kind "none", tuc la mot hanh
-        # dong `hard` khong co duong lui — dung loai can duong lui nhat.
-        old_values: list[dict] = []
-        for key in ROLLBACK_ENV_KEYS:
-            old = self.k8s.get_env(target, key, namespace=self.namespace)
-            if old is None:
-                continue
-            self.k8s.unset_env(target, key, namespace=self.namespace)
-            removed.append(key)
-            old_values.append({"key": key, "value": old})
-
-        if not removed:
+        history = self.k8s.rollout_history(target, namespace=self.history_namespace)
+        if len(history) < 2:
             return ActionResult(
                 action="rollback", target=target, namespace=self.namespace,
                 applied=False, verified=True,
-                detail="khong co bien moi truong nao de go, service da o trang thai goc",
-            )
+                detail=f"{target} chi co {len(history)} phien ban, khong co gi de quay lui")
+        current = history[-1]["revision"]
+        wanted = params.get("to_revision") or params.get("revision")
+        if wanted is None:
+            dest = history[-2]
+        else:
+            # LLM co the viet "3", "rev 3" hay "revision 3": lay so dau tien.
+            m = re.search(r"\d+", str(wanted))
+            try:
+                rev = int(m.group(0)) if m else int(str(wanted))
+            except ValueError:
+                return ActionResult(
+                    action="rollback", target=target, namespace=self.namespace,
+                    applied=False, verified=False,
+                    detail=f"to_revision khong phai so: {wanted!r}",
+                    error=f"to_revision khong phai so: {wanted!r}")
+            found = [h for h in history if h["revision"] == rev]
+            if not found:
+                have = ", ".join(str(h["revision"]) for h in history)
+                return ActionResult(
+                    action="rollback", target=target, namespace=self.namespace,
+                    applied=False, verified=False,
+                    detail=f"khong co phien ban {rev} (dang co: {have})",
+                    error=f"khong co phien ban {rev}")
+            if rev == current:
+                return ActionResult(
+                    action="rollback", target=target, namespace=self.namespace,
+                    applied=False, verified=True,
+                    detail=f"phien ban {rev} chinh la phien ban hien tai")
+            dest = found[0]
+
+        fields = dest["fields"]
+        old = self.k8s.apply_template_fields(
+            target, fields, namespace=self.namespace,
+            cause=f"agent: rollback to revision {dest['revision']}")
+        if _same_fields(old, fields):
+            return ActionResult(
+                action="rollback", target=target, namespace=self.namespace,
+                applied=False, verified=True,
+                detail=(f"cau hinh da giong phien ban {dest['revision']}, "
+                        f"khong doi gi"))
 
         self.k8s.wait_ready(target, timeout=240, namespace=self.namespace)
-
-        # KIEM CHUNG: doc lai tung bien, phai bien mat that.
-        for key in removed:
-            if self.k8s.get_env(target, key, namespace=self.namespace) is not None:
-                kept.append(key)
-        verified = not kept
+        actual = self.k8s.container_spec(target, namespace=self.namespace)
+        verified = _same_fields(actual, fields)
         return ActionResult(
             action="rollback", target=target, namespace=self.namespace,
             applied=True, verified=verified,
-            detail=f"da go bien: {', '.join(removed)}",
-            undo_kind="env",
-            undo_args={"items": old_values},
-            error="" if verified else f"van con sau khi go: {', '.join(kept)}",
+            detail=(f"quay ve phien ban {dest['revision']} (hien tai {current}): "
+                    f"{describe_fields_change(old, fields)}"),
+            undo_kind="template",
+            undo_args={"fields": old, "to_revision": dest["revision"]},
+            error="" if verified else "doc lai cau hinh khong khop phien ban dich",
         )
 
     # ------------------------------------------------------------------
@@ -384,7 +424,15 @@ class ActionExecutor:
                 detail="hanh dong nay khong hoan tac duoc, khong co gi de lam",
             )
         try:
-            if kind == "scale":
+            if kind == "template":
+                want = args["fields"]
+                self.k8s.apply_template_fields(target, want, namespace=self.namespace,
+                                               cause=f"agent: undo {result.action}")
+                self.k8s.wait_ready(target, timeout=240, namespace=self.namespace)
+                actual = self.k8s.container_spec(target, namespace=self.namespace)
+                verified = _same_fields(actual, want)
+                detail = f"cau hinh ve lai truoc {result.action}"
+            elif kind == "scale":
                 want = int(args["replicas"])
                 self.k8s.scale_deployment(target, want, namespace=self.namespace)
                 self.k8s.wait_replicas(target, want, timeout=180,
@@ -394,7 +442,8 @@ class ActionExecutor:
                 detail = f"so ban sao ve lai {actual} (yeu cau {want})"
             elif kind == "cpu":
                 self.k8s.restore_cpu(target, args.get("limit"), args.get("request"),
-                                     namespace=self.namespace)
+                                     namespace=self.namespace,
+                                     cause=f"agent: undo {result.action}")
                 self.k8s.wait_ready(target, timeout=180, namespace=self.namespace)
                 actual = self.k8s.get_cpu_limit(target, namespace=self.namespace)
                 a_m = cpu_to_millicores(actual)
@@ -409,10 +458,12 @@ class ActionExecutor:
                                                "value": args.get("value")}]
                 for it in items:
                     if it.get("value") is None:
-                        self.k8s.unset_env(target, it["key"], namespace=self.namespace)
+                        self.k8s.unset_env(target, it["key"], namespace=self.namespace,
+                                           cause=f"agent: undo {result.action}")
                     else:
                         self.k8s.set_env(target, it["key"], it["value"],
-                                         namespace=self.namespace)
+                                         namespace=self.namespace,
+                                         cause=f"agent: undo {result.action}")
                 self.k8s.wait_ready(target, timeout=180, namespace=self.namespace)
                 parts, verified = [], True
                 for it in items:
@@ -468,3 +519,14 @@ def risk_of(action: str) -> str:
 def needs_twin(action: str) -> bool:
     """Hành động này có bắt buộc phải qua twin xác nhận không (mục 7.3 KLTN.md)."""
     return action in NEEDS_TWIN or risk_of(action) == "hard"
+
+
+def _same_fields(a: dict, b: dict) -> bool:
+    """Hai bộ cấu hình container giống nhau chưa. CPU so theo millicore."""
+    if (a.get("env") or {}) != (b.get("env") or {}):
+        return False
+    for k in ("cpu_limit", "cpu_request"):
+        if b.get(k) is not None and cpu_to_millicores(a.get(k)) != cpu_to_millicores(b.get(k)):
+            return False
+    return b.get("image") in (None, a.get("image"))
+

@@ -73,6 +73,18 @@ def action_correct(predicted_actions: list[str], correct_actions: list[str]) -> 
     }
 
 
+def fault_type_matches(predicted: str, ground_truth: dict) -> bool:
+    """Nhãn loại lỗi có khớp đáp án không.
+
+    Từ v2 đáp án có thể chấp nhận nhiều nhãn (`accepted_fault_types`): nhãn
+    `configuration_error` được thêm để phủ kịch bản H2, mà S1 và F4 cũng là lỗi gây ra
+    bằng đổi cấu hình, nên gán nhãn đó cho chúng không phải chẩn đoán sai. File đáp án
+    cũ chỉ có `fault_type` thì chấm như cũ.
+    """
+    accepted = ground_truth.get("accepted_fault_types") or [ground_truth.get("fault_type", "")]
+    return predicted in accepted
+
+
 def score_case(explanation, ground_truth: dict, scenario: str = "") -> CaseScore:
     """Chấm một ca. `ground_truth` là dict đọc từ file trong data/runs/."""
     expected_root = ground_truth.get("target_service", "")
@@ -88,9 +100,7 @@ def score_case(explanation, ground_truth: dict, scenario: str = "") -> CaseScore
         action_correct=action_correct(actions,
                                       ground_truth.get("correct_actions", [])),
         confidence=explanation.confidence,
-        fault_type_correct=(
-            explanation.fault_type == ground_truth.get("fault_type", "")
-        ),
+        fault_type_correct=fault_type_matches(explanation.fault_type, ground_truth),
         predicted_root=explanation.root_cause_service,
         expected_root=expected_root,
     )

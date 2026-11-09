@@ -43,7 +43,9 @@ CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "llm_cache"
 # Đổi số này mỗi khi sửa prompt, để cache cũ không bị dùng nhầm cho prompt mới.
 # v6: them `preconditions` vao schema va luat tham so phai la gia tri cu the. Bo
 # qua ten v5 vi ten do da dung cho goi prompt bi loai o phase 3.
-PROMPT_VERSION = "v6"
+# v7 (thi nghiem v2): them doan mo ta trung tinh muc CONFIGURATION CHANGES va nghia
+# moi cua rollback (quay ve phien ban, tham so to_revision). Khong them luat nao.
+PROMPT_VERSION = "v7"
 
 
 @dataclass(frozen=True)

@@ -45,7 +45,11 @@ DEFAULT_STATE = {
 
 
 class FakeK8s:
-    """Cluster giả. Trạng thái dùng chung giữa mọi instance, như cluster thật."""
+    """Cluster giả. Trạng thái dùng chung giữa mọi instance, như cluster thật.
+
+    Mỗi lần đổi pod template (env, CPU, image, khởi động lại) sinh một phiên bản mới
+    trong `history`, giống ReplicaSet của Kubernetes. Đổi số bản sao thì không.
+    """
 
     state: dict = {}
 
@@ -58,6 +62,27 @@ class FakeK8s:
 
     def _d(self, dep, ns):
         return FakeK8s.state[ns or self.namespace][dep]
+
+    @staticmethod
+    def _fields(d):
+        return {"env": dict(d["env"]), "cpu_limit": d["cpu_limit"],
+                "cpu_request": d["cpu_request"], "image": d["image"]}
+
+    def _hist(self, dep, ns):
+        d = self._d(dep, ns)
+        if "history" not in d:
+            d["history"] = [{"revision": 1, "fields": self._fields(d),
+                             "changed_at": 0.0, "cause": None, "restarted_at": None}]
+        return d["history"]
+
+    def _bump(self, dep, ns, cause, restarted=None):
+        h = self._hist(dep, ns)
+        h.append({"revision": h[-1]["revision"] + 1,
+                  "fields": self._fields(self._d(dep, ns)),
+                  "changed_at": FakeK8s.clock, "cause": cause,
+                  "restarted_at": restarted})
+
+    clock = 1000.0
 
     def list_deployments(self, namespace=None):
         return sorted(FakeK8s.state[namespace or self.namespace])
@@ -74,30 +99,62 @@ class FakeK8s:
     def get_env(self, dep, key, namespace=None, container=None):
         return self._d(dep, namespace)["env"].get(key)
 
-    def set_env(self, dep, key, value, namespace=None, container=None):
+    def set_env(self, dep, key, value, namespace=None, container=None, cause=None):
+        self._hist(dep, namespace)
+        old = self._d(dep, namespace)["env"].get(key)
         self._d(dep, namespace)["env"][key] = value
+        self._bump(dep, namespace, cause)
+        return old
 
-    def unset_env(self, dep, key, namespace=None, container=None):
-        return self._d(dep, namespace)["env"].pop(key, None)
+    def unset_env(self, dep, key, namespace=None, container=None, cause=None):
+        self._hist(dep, namespace)
+        old = self._d(dep, namespace)["env"].pop(key, None)
+        self._bump(dep, namespace, cause)
+        return old
 
     def scale_deployment(self, dep, replicas, namespace=None):
         old = self._d(dep, namespace)["replicas"]
         self._d(dep, namespace)["replicas"] = replicas
         return old
 
-    def set_cpu_limit(self, dep, cpu, namespace=None, container=None):
+    def set_cpu_limit(self, dep, cpu, namespace=None, container=None, cause=None):
+        self._hist(dep, namespace)
         d = self._d(dep, namespace)
         d["cpu_limit"], d["cpu_request"] = cpu, cpu
+        self._bump(dep, namespace, cause)
 
-    def restore_cpu(self, dep, limit, request, namespace=None, container=None):
+    def restore_cpu(self, dep, limit, request, namespace=None, container=None,
+                    cause=None):
+        self._hist(dep, namespace)
         d = self._d(dep, namespace)
         if limit is not None:
             d["cpu_limit"] = limit
         if request is not None:
             d["cpu_request"] = request
+        self._bump(dep, namespace, cause)
 
-    def restart_deployment(self, dep, namespace=None):
+    def restart_deployment(self, dep, namespace=None, cause=None):
+        self._hist(dep, namespace)
+        self._bump(dep, namespace, cause, restarted=str(FakeK8s.clock))
         return "now"
+
+    def container_spec(self, dep, namespace=None):
+        return self._fields(self._d(dep, namespace))
+
+    def apply_template_fields(self, dep, fields, namespace=None, cause=None):
+        self._hist(dep, namespace)
+        d = self._d(dep, namespace)
+        old = self._fields(d)
+        d["env"] = dict(fields.get("env") or {})
+        for k in ("cpu_limit", "cpu_request", "image"):
+            if fields.get(k) is not None:
+                d[k] = fields[k]
+        if self._fields(d) != old:
+            self._bump(dep, namespace, cause)
+        return old
+
+    def rollout_history(self, dep, namespace=None):
+        return copy.deepcopy(self._hist(dep, namespace))
 
     def list_pods(self, namespace=None):
         return []
@@ -108,12 +165,13 @@ class FakeK8s:
     def wait_ready(self, *a, **k):
         return True
 
-    def deployment_configs(self, namespace=None, env_keys=("EXTRA_LATENCY",)):
+    def deployment_configs(self, namespace=None, env_keys=None):
         out = {}
         for name, d in FakeK8s.state[namespace or self.namespace].items():
+            keys = sorted(d["env"]) if env_keys is None else env_keys
             out[name] = {"replicas": d["replicas"], "image": d["image"],
                          "cpu_limit": d["cpu_limit"], "cpu_request": d["cpu_request"],
-                         **{f"env.{k}": d["env"].get(k) for k in env_keys}}
+                         **{f"env.{k}": d["env"].get(k) for k in keys}}
         return out
 
 
@@ -264,11 +322,19 @@ def test_word_as_cpu_param_is_blocked():
     assert not ok, "cpu_limit='increase' khong thi hanh duoc, phai bi chan truoc"
 
 
-def test_rollback_without_env_is_blocked():
+def test_rollback_without_earlier_revision_is_blocked():
     FakeK8s.reset()
     ok, _ = check_preconditions(ProposedAction(**act("rollback", "productcatalogservice",
                                                      risk="hard")), FakeK8s())
-    assert not ok, "khong co EXTRA_LATENCY thi rollback vo nghia"
+    assert not ok, "chi co mot phien ban thi khong co gi de quay lui"
+    FakeK8s().set_env("productcatalogservice", "EXTRA_LATENCY", "6s")
+    ok, _ = check_preconditions(ProposedAction(**act("rollback", "productcatalogservice",
+                                                     risk="hard")), FakeK8s())
+    assert ok, "co phien ban truoc thi duoc quay lui"
+    ok, _ = check_preconditions(ProposedAction(**act(
+        "rollback", "productcatalogservice", {"to_revision": "2"}, risk="hard")),
+        FakeK8s())
+    assert not ok, "quay ve chinh phien ban hien tai la vo nghia"
 
 
 def test_no_action_always_passes():
@@ -301,10 +367,10 @@ def test_drift_detects_changes_and_ignores_notation():
 
 def test_rollback_can_be_undone():
     FakeK8s.reset()
-    FakeK8s.state["default"]["productcatalogservice"]["env"]["EXTRA_LATENCY"] = "6s"
+    FakeK8s().set_env("productcatalogservice", "EXTRA_LATENCY", "6s")
     ex = ActionExecutor(k8s=FakeK8s(), namespace="default")
     r = ex.apply(ProposedAction(**act("rollback", "productcatalogservice", risk="hard")))
-    assert r.ok and r.undo_kind == "env", r
+    assert r.ok and r.undo_kind == "template", r
     assert FakeK8s().get_env("productcatalogservice", "EXTRA_LATENCY") is None
     u = ex.undo(r)
     assert u.ok, u
@@ -380,7 +446,7 @@ def test_direct_mode_records_but_never_undoes():
 
 def test_agent_skips_when_recovered_during_twin():
     FakeK8s.reset()
-    FakeK8s.state["default"]["productcatalogservice"]["env"]["EXTRA_LATENCY"] = "6s"
+    FakeK8s().set_env("productcatalogservice", "EXTRA_LATENCY", "6s")
     FakeSnap.healthy = False
     FakeVerifier.queues = {"twin": [WORSE_RED, BETTER_RED]}
     agent = make_agent("twin_verified", act("rollback", "productcatalogservice",
@@ -488,7 +554,7 @@ def test_resume_refuses_changed_code():
     r = object.__new__(EvalRunner)
     r.log = lambda m: None
     r.fingerprint = {"code_sha": "aaa", "prompt_version": "v6", "model": "m",
-                     "extra_hard_actions": []}
+                     "extra_hard_actions": [], "twin_settle_seconds": 300}
     r.allow_code_change = False
     # Phien cu chua co khoa extra_hard_actions: coi nhu khong ep hanh dong nao.
     assert r._session_matches({"code_sha": "aaa", "prompt_version": "v6", "model": "m"})
@@ -497,6 +563,9 @@ def test_resume_refuses_changed_code():
     assert not r._session_matches({"code_sha": "aaa", "prompt_version": "v6", "model": "m",
                                    "extra_hard_actions": ["adjust_resources"]}), \
         "doi cong vao twin la thi nghiem khac, khong duoc resume lan"
+    assert not r._session_matches({"code_sha": "aaa", "prompt_version": "v6", "model": "m",
+                                   "twin_settle_seconds": 120}), \
+        "doi thoi luong quan sat tren twin la thi nghiem khac"
     r.allow_code_change = True
     assert r._session_matches({"code_sha": "bbb", "prompt_version": "v6", "model": "m"})
 

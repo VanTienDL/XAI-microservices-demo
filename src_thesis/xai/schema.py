@@ -28,6 +28,9 @@ Ba chỗ khác so với mục 7.2, đều có lý do rút ra từ phase 2:
    đang có 0 bản sao"), và `src_thesis/agent/guards.py` đem đối chiếu với cluster
    ngay trước khi thi hành. Chỉ có những loại mà snapshot cho LLM nhìn thấy — không
    có loại nào về biến môi trường, vì snapshot không chứa biến môi trường.
+
+5. (v2) Thêm loại lỗi `configuration_error`, để bộ nhãn phủ được đáp án của kịch
+   bản H2 (cấu hình địa chỉ sai). Cùng bài học với nhãn `pod_kill` ở điểm 2.
 """
 
 from __future__ import annotations
@@ -42,6 +45,7 @@ FaultType = Literal[
     "pod_kill",              # pod bị xóa, Kubernetes đã tự tạo lại
     "resource_exhaustion",   # hết CPU hoặc RAM
     "dependency_failure",    # bản thân nó ổn, thứ nó gọi mới hỏng
+    "configuration_error",   # v2: cấu hình sai (biến môi trường, địa chỉ, giới hạn)
     "unknown",
 ]
 

@@ -167,6 +167,10 @@ def main() -> int:
                     help="hanh dong bi ep len muc hard (bat buoc qua twin), cach nhau "
                          "bang dau phay; vi du adjust_resources. Mac dinh theo Bang 2 "
                          "de cuong")
+    ap.add_argument("--twin-settle", type=int, default=None,
+                    help="giay quan sat tren twin truoc va sau khi thu hanh dong, "
+                         "cung la be rong cua so do tren twin (mac dinh = --settle). "
+                         "Khong doi cua so watch tren production")
     ap.add_argument("--allow-code-change", action="store_true",
                     help="cho resume du code/prompt/model da doi so voi luc mo phien; "
                          "mac dinh tu choi vi hai nua phien do bang hai thuoc khac nhau")
@@ -199,6 +203,7 @@ def main() -> int:
         baseline_repeats=args.baseline_repeats,
         allow_code_change=args.allow_code_change,
         hard_actions=tuple(a.strip() for a in args.hard_actions.split(",") if a.strip()),
+        twin_settle_seconds=args.twin_settle,
     )
 
     code = runner.run_all(limit=args.limit, budget_minutes=args.budget_minutes)

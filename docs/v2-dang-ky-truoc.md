@@ -40,7 +40,18 @@ Chỉ những thay đổi sau. Bộ phán quyết của twin (`verifier.py`) và
    (`adjust_resources`, `scale_up`, `scale_down`, `restart_pod`, `rollback`) đều phải
    qua twin (`--hard-actions adjust_resources,scale_up,scale_down`).
 6. **Cờ `--twin-settle`** chỉnh riêng thời gian quan sát trên twin, không đổi cửa sổ
-   đo hành động gây hại trên hệ thống chính.
+   đo hành động gây hại trên hệ thống chính. **Cửa sổ đo trên twin bằng đúng thời
+   gian chờ** (120 giây chờ thì đo cửa sổ 120 giây), để số "sau" không lẫn dữ liệu
+   trước khi thi hành. Mặc định 300 giây trùng cửa sổ "5m" của v1.
+7. **Mốc lịch sử thay đổi = lúc bắt đầu ca.** Thay đổi trước mốc (dọn dẹp ca trước)
+   không hiện trong prompt, tránh nhiễu chéo giữa các ca — cùng loại với dấu "pod
+   RECREATED" đã gặp ở v1.
+8. **Nhãn loại lỗi `configuration_error`** thêm vào schema để phủ đáp án H2. Đáp án
+   chấp nhận nhiều nhãn (`accepted_fault_types`): S1 nhận `latency` hoặc
+   `configuration_error`, F4 nhận `resource_exhaustion` hoặc `configuration_error`,
+   H2 nhận `configuration_error`. File đáp án v1 vẫn chấm như cũ.
+9. **Bộ chạy khôi phục cấu hình gốc** chụp lúc mở phiên nếu ca trước để sót thay đổi,
+   ghi vào file ca (`restored_before_case`); khôi phục không được thì dừng phiên.
 
 ## 3. Giả thuyết
 
@@ -94,8 +105,11 @@ lịch sử thay đổi hay chỉ đọc tên biến.
 
 - **Phiên chính v2:** 8 kịch bản × (direct 5 lần + twin 5 lần + baseline 2 lần)
   = 96 ca. Chế độ twin chạy với `--hard-actions adjust_resources,scale_up,scale_down`.
-- **Phiên thời lượng:** chế độ twin, `--twin-settle` ∈ {120, 300, 600} giây,
-  kịch bản S1, S4, S5, 5 lần mỗi ô = 45 ca.
+- **Phiên thời lượng:** chế độ twin, `--twin-settle` ∈ {120, 600} giây, kịch bản
+  S1, S4, S5, 5 lần mỗi ô = 30 ca chạy mới. Mức 300 giây lấy từ các ca twin S1, S4,
+  S5 của phiên chính (cùng code đóng băng, cùng cấu hình), tổng 45 ca như kế hoạch.
+- Mã phiên cố định: `v2-main`, `v2-twin120`, `v2-twin600`. Chạy bằng
+  `scripts/v2_pipeline.sh` trong tmux, chạy tiếp được sau gián đoạn.
 - Model `gpt-4.1-mini`, tắt cache LLM, tối đa 3 vòng mỗi ca, cùng máy ảo GCP
   `n2-custom-6-16384` như v1.
 

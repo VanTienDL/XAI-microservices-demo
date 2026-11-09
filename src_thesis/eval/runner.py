@@ -41,6 +41,7 @@ from src_thesis.agent.actions import (
     extra_hard_actions,
     set_extra_hard_actions,
 )
+from src_thesis.agent.guards import capture_config, config_drift
 from src_thesis.agent.react_loop import ReactAgent, compact_red
 from src_thesis.eval import metrics as M
 from src_thesis.eval.preflight import (
@@ -160,6 +161,7 @@ class EvalRunner:
         baseline_repeats: int | None = DEFAULT_BASELINE_REPEATS,
         allow_code_change: bool = False,
         hard_actions: tuple = (),
+        twin_settle_seconds: int | None = None,
         log=print,
     ):
         self.run_id = run_id or time.strftime("%Y%m%d-%H%M%S")
@@ -168,6 +170,13 @@ class EvalRunner:
         self.repeats = repeats
         self.baseline_repeats = repeats if baseline_repeats is None else baseline_repeats
         self.settle_seconds = settle_seconds
+        # Thoi gian quan sat rieng tren twin (v2). None = bang settle_seconds, dung
+        # nhu v1.
+        self.twin_settle_seconds = (settle_seconds if twin_settle_seconds is None
+                                    else twin_settle_seconds)
+        # Cau hinh goc cua moi deployment, chup luc mo phien (v2). Truoc moi ca, he
+        # thong phai khop dung cau hinh nay — xem `_restore_reference_config`.
+        self.config_reference: dict | None = None
         self.max_rounds = max_rounds
         self.dry_run = dry_run
         self.baseline_give_up_s = baseline_give_up_s
@@ -200,7 +209,8 @@ class EvalRunner:
         set_extra_hard_actions(hard_actions)
         self.fingerprint = {**code_fingerprint(), "prompt_version": PROMPT_VERSION,
                             "model": self.model_name,
-                            "extra_hard_actions": extra_hard_actions()}
+                            "extra_hard_actions": extra_hard_actions(),
+                            "twin_settle_seconds": self.twin_settle_seconds}
 
     # ------------------------------------------------------------------
     # CHUAN BI
@@ -227,10 +237,22 @@ class EvalRunner:
                  f"prompt {fp['prompt_version']}")
         if fp.get("extra_hard_actions"):
             self.log(f"Ep qua twin: {', '.join(fp['extra_hard_actions'])} "
-                     f"(khac Bang 2 de cuong — thi nghiem phu)")
+                     f"(khac Bang 2 de cuong)")
+        self.log(f"Quan sat tren twin: {self.twin_settle_seconds}s, "
+                 f"cua so watch production: {self.settle_seconds}s")
         session = self._load_session()
         if session is not None and not self._session_matches(session):
             return False
+
+        # Cau hinh goc: phien moi thi chup bay gio (he thong vua qua kiem tra sach),
+        # resume thi dung lai dung ban da chup luc mo phien.
+        if session is not None and session.get("config_reference"):
+            self.config_reference = session["config_reference"]
+        elif not self.dry_run:
+            self.config_reference = capture_config(self.k8s, "default")
+            if self.config_reference is None:
+                self.log("KHONG CHAY DUOC — khong doc duoc cau hinh deployment")
+                return False
 
         if self.dry_run:
             self.baseline_note = "dry_run: khong chup nen"
@@ -301,9 +323,12 @@ class EvalRunner:
     def _session_matches(self, session: dict) -> bool:
         """Resume chỉ được phép khi code, prompt và model y như buổi đầu."""
         # Phien cu chua co khoa `extra_hard_actions` nghia la khong ep hanh dong nao.
-        defaults = {"extra_hard_actions": []}
+        # Phien v1 chua co `twin_settle_seconds`: twin quan sat 300 giay.
+        defaults = {"extra_hard_actions": [], "twin_settle_seconds": 300}
+        keys = ("code_sha", "prompt_version", "model", "extra_hard_actions",
+                "twin_settle_seconds")
         diffs = [f"{k}: {session.get(k, defaults.get(k))} -> {self.fingerprint.get(k)}"
-                 for k in ("code_sha", "prompt_version", "model", "extra_hard_actions")
+                 for k in keys
                  if session.get(k, defaults.get(k)) != self.fingerprint.get(k)]
         if not diffs:
             return True
@@ -326,6 +351,7 @@ class EvalRunner:
             except ValueError:
                 rel = str(baseline_path)
         data = {**self.fingerprint, "run_id": self.run_id, "baseline_file": rel,
+                "config_reference": self.config_reference,
                 "created_at_human": time.strftime("%Y-%m-%d %H:%M:%S")}
         (self.out_dir / SESSION_FILE).write_text(
             json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -385,11 +411,18 @@ class EvalRunner:
             # ca nay mang dau "RECREATED" cua ca truoc.
             if not wait_for_settled_pods(self.k8s, log=self.log):
                 raise CaseAborted("co pod khoi dong lai lien tuc")
+            restored = self._restore_reference_config()
             snap = wait_for_clean_baseline(f"eval-{case_id}-truoc",
                                            baseline=self.baseline,
                                            save=False, log=self.log)
             if snap is None:
                 raise CaseAborted("he thong khong tro ve trang thai sach")
+        else:
+            restored = []
+
+        # Moc bat dau ca: thay doi cau hinh truoc moc nay (don dep ca truoc, khoi phuc
+        # o tren) KHONG duoc hien trong lich su thay doi cua prompt ca nay.
+        case_started_at = time.time()
 
         # --- 2. tiem loi ---
         inj = FaultInjector()
@@ -420,6 +453,9 @@ class EvalRunner:
                                                time.localtime(injected_at)),
             "ground_truth": ground_truths,
             "settle_seconds": self.settle_seconds,
+            "twin_settle_seconds": self.twin_settle_seconds,
+            "changes_since": case_started_at,
+            "restored_before_case": restored,
             "errors": [],
         }
 
@@ -431,7 +467,8 @@ class EvalRunner:
             if mode == "baseline":
                 report, final_red = self._run_baseline_mode(case_id, injected_at)
             else:
-                report, final_red = self._run_agent_mode(mode, case_id)
+                report, final_red = self._run_agent_mode(mode, case_id,
+                                                         case_started_at)
             case["report"] = report
             case["final_red"] = final_red
 
@@ -444,6 +481,52 @@ class EvalRunner:
 
         self._save_case(sid, mode, rep, case)
         return case
+
+    def _restore_reference_config(self) -> list[str]:
+        """Đưa mọi deployment về đúng cấu hình gốc chụp lúc mở phiên, nếu lệch.
+
+        VÌ SAO: chạy không người trông hàng chục giờ, một lần hoàn tác hỏng (API lỗi
+        tạm thời, rollout quá giờ) là ca sau bắt đầu từ cấu hình sai mà không ai
+        biết — `active_fault.json` chỉ nhớ lỗi đã TIÊM, không nhớ thứ agent đã đổi.
+        So với bản gốc thì bắt được cả hai.
+
+        Có tự sửa, khác nguyên tắc "không tự dọn" của `ensure_clean_slate`, vì đây
+        là khôi phục về một cấu hình ĐÃ GHI LẠI, không phải đoán; và mọi lần khôi
+        phục được ghi vào file ca (`restored_before_case`) để chấm điểm còn biết.
+        Khôi phục xong vẫn lệch thì dừng cả phiên.
+        """
+        if self.config_reference is None:
+            return []
+        current = capture_config(self.k8s, "default")
+        drift = config_drift(self.config_reference, current)
+        if not drift:
+            return []
+        self.log("  CAU HINH LECH so voi luc mo phien, khoi phuc:")
+        for d in drift:
+            self.log(f"    {d}")
+        for dep, ref in self.config_reference.items():
+            cur = (current or {}).get(dep)
+            if cur is None or cur == ref:
+                continue
+            fields = {"env": {k[4:]: v for k, v in ref.items()
+                              if k.startswith("env.") and v is not None},
+                      "cpu_limit": ref.get("cpu_limit"),
+                      "cpu_request": ref.get("cpu_request"),
+                      "image": ref.get("image")}
+            try:
+                self.k8s.apply_template_fields(dep, fields, namespace="default",
+                                               cause="runner: restore reference")
+                if cur.get("replicas") != ref.get("replicas"):
+                    self.k8s.scale_deployment(dep, ref["replicas"], namespace="default")
+                self.k8s.wait_ready(dep, timeout=240, namespace="default")
+            except Exception as e:
+                self.log(f"    khoi phuc {dep} NEM LOI: {e}")
+        after = config_drift(self.config_reference, capture_config(self.k8s, "default"))
+        if after:
+            raise RunAborted("khong khoi phuc duoc cau hinh goc: " + "; ".join(after))
+        if not wait_for_settled_pods(self.k8s, log=self.log):
+            raise CaseAborted("co pod khoi dong lai lien tuc sau khi khoi phuc")
+        return drift
 
     def _wait(self, seconds: int, why: str) -> None:
         if self.dry_run:
@@ -533,13 +616,16 @@ class EvalRunner:
                 return rounds, None
             time.sleep(BASELINE_POLL_GAP_S)
 
-    def _run_agent_mode(self, mode: str, case_id: str) -> tuple[dict, dict]:
+    def _run_agent_mode(self, mode: str, case_id: str,
+                        changes_since: float | None = None) -> tuple[dict, dict]:
         """Chạy agent ReAct ở chế độ `direct`, `twin_verified` hoặc `xai_only`."""
         agent = ReactAgent(
             mode=mode,
             namespace="default",
             max_rounds=self.max_rounds,
             settle_seconds=self.settle_seconds,
+            twin_settle_seconds=self.twin_settle_seconds,
+            changes_since=changes_since,
             dry_run=self.dry_run,
             reasoner=self.reasoner,
             baseline=self.baseline,
@@ -647,7 +733,7 @@ class EvalRunner:
             out.propagation_jaccard = M.propagation_accuracy(
                 exp.get("propagation_path") or [], expected_prop)
             out.fault_type_correct = any(
-                exp.get("fault_type") == g.get("fault_type") for g in gts)
+                M.fault_type_matches(exp.get("fault_type"), g) for g in gts)
             actions = [a.get("action", "")
                        for a in (exp.get("proposed_actions") or [])]
             correct: list[str] = []
