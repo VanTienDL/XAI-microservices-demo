@@ -1,0 +1,48 @@
+{
+  "20261027-094812": {
+    "totals": {
+      "direct": {
+        "goc_neutral": 16,
+        "cho_neutral": 17,
+        "goc_harmful": 9,
+        "cho_harmful": 8,
+        "goc_helpful": 36,
+        "cho_helpful": 36
+      },
+      "twin_verified": {
+        "goc_helpful": 30,
+        "cho_helpful": 31,
+        "goc_harmful": 10,
+        "cho_harmful": 9,
+        "goc_neutral": 16,
+        "cho_neutral": 16,
+        "goc_not_applied": 1,
+        "cho_not_applied": 1
+      }
+    },
+    "flips": {
+      "direct: harmful -> helpful": 1,
+      "direct: helpful -> neutral": 1,
+      "twin_verified: harmful -> helpful": 1
+    },
+    "mismatch_with_stored": 0
+  },
+  "20261029-030608": {
+    "totals": {
+      "twin_verified": {
+        "goc_neutral": 5,
+        "cho_neutral": 8,
+        "goc_not_applied": 4,
+        "cho_not_applied": 4,
+        "goc_harmful": 4,
+        "cho_harmful": 1,
+        "goc_helpful": 11,
+        "cho_helpful": 11
+      }
+    },
+    "flips": {
+      "twin_verified: harmful -> neutral": 3
+    },
+    "mismatch_with_stored": 0
+  }
+}
