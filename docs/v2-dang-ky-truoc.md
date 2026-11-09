@@ -124,9 +124,17 @@ lịch sử thay đổi hay chỉ đọc tên biến.
 
 ## 8. Đóng băng
 
-- Code: `<điền mã code_sha khi gắn tag v2-frozen>`
+- Code: `810f4e26416f729b` (dấu vân tay `code_fingerprint`, ghi vào mọi file ca)
 - Tag: `v2-frozen`
-- Ngày đóng băng: `<điền>`
+- Ngày đóng băng: 2026-11-09
+- **Đổi thứ tự so với kế hoạch ở mục 6:** đóng băng TRƯỚC lần chạy thử, để máy ảo
+  tự chạy tiếp không cần người. Chạy thử 2 ca S2 (phiên `v2-pilot`, không tính vào
+  kết quả) đi qua cổng tự động `scripts/v2_pilot_gate.py`; không qua cổng thì phiên
+  chính không được bật (`scripts/v2_autostart.sh`). Nếu đọc lại ca chạy thử thấy lỗi
+  phải sửa code, phiên chính dừng, mở phiên mới và ghi vào mục 9.
+- Kiểm trước khi đóng băng: `tests/test_guards.py` 22/22, `tests/test_v2.py` 14/14;
+  `scripts/v2_check.py` trên cluster thật đạt history, rollback, h2 (twin, h1 đang
+  chạy lúc đóng băng — autostart chỉ đi tiếp khi đạt 6/6).
 
 ## 9. Nhật ký thay đổi sau đóng băng
 
