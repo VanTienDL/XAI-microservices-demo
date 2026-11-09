@@ -71,7 +71,7 @@ from src_thesis.graph.model import ServiceGraph
 from src_thesis.k8s_client import K8sClient
 from src_thesis.telemetry.prometheus_client import PrometheusClient
 from src_thesis.telemetry.snapshot import take_snapshot
-from src_thesis.xai.reasoner import XaiReasoner
+from src_thesis.xai.reasoner import PROMPT_VERSION, XaiReasoner
 from src_thesis.xai.schema import Explanation, ProposedAction
 
 RUNS_DIR = Path(__file__).resolve().parents[2] / "data" / "agent_runs"
@@ -117,6 +117,16 @@ class RoundLog:
     round_no: int
     snapshot_label: str = ""
     snapshot_fingerprint: str = ""
+    # SNAPSHOT DAY DU va DUNG NGUYEN VAN prompt da gui LLM (lay tu nhanh cua Tho,
+    # commit 4286bb3e). Day la dau vao cua danh gia loi giai thich: khong co chung
+    # thi khong truy nguoc duoc con so nao trong `evidence` ve trang thai he thong
+    # luc chan doan, va khong lam duoc phep thu phan thuc.
+    #
+    # Luu NGAY TRONG nhat ky, khong chi luu duong dan: data/runs/ nam ngoai git.
+    # `prompt_text` gom ca phan hoi cua vong truoc, thu khong dung lai duoc tu
+    # snapshot, nen phai luu ca chuoi.
+    snapshot: dict = field(default_factory=dict)
+    prompt_text: str = ""
     diff_summary: str = ""
     healthy: bool = False
     # Thoi diem CHUP, khac `started_at` o cho no la moc de tinh MTTR (chi so 3
@@ -269,6 +279,7 @@ class ReactAgent:
         d = snap.to_dict()
         self._round_log.snapshot_label = d.get("label", "")
         self._round_log.snapshot_fingerprint = d.get("fingerprint", "")
+        self._round_log.snapshot = d
         self._round_log.observed_at = d.get("taken_at", time.time())
         self._round_log.red = compact_red(d.get("red", {}))
 
@@ -307,6 +318,7 @@ class ReactAgent:
 
         res = self.reasoner.diagnose(prompt)
         log = self._round_log
+        log.prompt_text = prompt
         log.reasoning_ran = True
         log.reasoning_ok = res.ok
         log.input_tokens = res.input_tokens
@@ -750,6 +762,12 @@ class ReactAgent:
             # dung nen nao thi khong giai thich duoc vi sao no phat hien hay bo sot.
             "baseline_source": self.baseline_source,
             "has_baseline": self.baseline is not None,
+            # Phep thu phan thuc phai goi lai DUNG model va DUNG ban prompt nay.
+            # Doc bang getattr: ghi nhat ky khong duoc lam sap agent.
+            "llm": {"provider": getattr(getattr(self.reasoner, "provider", None),
+                                        "name", None),
+                    "model": getattr(self.reasoner, "model", None),
+                    "prompt_version": PROMPT_VERSION},
             "healthy_at_end": bool(state.get("healthy")),
             "stop_reason": stop_reason,
             "total_input_tokens": sum(r.get("input_tokens", 0)
