@@ -400,6 +400,23 @@ gói prompt v5 đã bị loại, phải tách ra thử từng quy tắc một.
 
 ---
 
+### Tình trạng: PHASE 6 v1 XONG, v2 ĐANG CHẠY (cập nhật 2026-11-09)
+
+Mục "CODE XONG, CHƯA CHẠY CA NÀO" ở trên đã cũ. Thực tế:
+
+- **v1 chạy xong** trên máy ảo GCP: phiên chính `20261027-094812` (72 ca) và thí nghiệm
+  phụ `20261029-030608` (15 ca), tag `phase-6-done`. Số liệu cuối ở mục "Số liệu cuối"
+  của `docs/thesis-notes.md`. Giả thuyết trung tâm KHÔNG được ủng hộ (gây hại twin 10,
+  direct 9); nguyên nhân là cổng vào twin bỏ sót hành động mức thấp và ảnh chụp thiếu
+  bằng chứng thay đổi cấu hình.
+- **v2** sửa đúng hai nguyên nhân đó, đăng ký trước ở `docs/v2-dang-ky-truoc.md`: lịch sử
+  thay đổi cấu hình trong ảnh chụp, `rollback` quay về phiên bản thật, prompt v7, mọi
+  hành động đổi cấu hình qua twin, hai kịch bản giữ lại H1, H2, và thí nghiệm thời
+  lượng quan sát trên twin (120 / 300 / 600 giây).
+- Kiểm: `tests/test_guards.py` 22/22, `tests/test_v2.py` 14/14, `scripts/v2_check.py` trên
+  cluster thật. Chạy: `scripts/v2_pipeline.sh` trong tmux. Phân tích:
+  `scripts/v2_analyze.py`, độ nhạy: `scripts/rescore_wait.py`.
+
 ## Tổng thời gian
 
 Phase 0 một tuần, phase 1 và 3 và 4 mỗi cái một tuần rưỡi, phase 2 và 5 mỗi cái một tuần, phase 6 hai tuần. Cộng lại khoảng 9,5 tuần nếu không tắc chỗ nào. Phase 0 bước 0.4 là chỗ dễ trượt tiến độ nhất, đặt hạn cứng một tuần cho nó.

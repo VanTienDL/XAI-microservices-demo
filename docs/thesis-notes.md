@@ -1401,3 +1401,39 @@ Ai chắc chắn máy không khởi động lại giữa các buổi thì ghim n
 - Twin và production không chạy song song, nên MTTR của chế độ twin-verified có cộng thêm thời gian dựng twin.
 
 ## Số liệu cuối
+
+Cập nhật 2026-11-09. Mọi con số dưới đây tính lại được bằng script, không chép tay:
+`scripts/v2_analyze.py` (bảng tổng hợp) và `scripts/rescore_wait.py` (độ nhạy).
+
+### v1 — phiên chính `20261027-094812` (72 ca, prompt v6, `gpt-4.1-mini`, máy ảo GCP)
+
+Tag `phase-6-done`. Ảnh nền `data/runs/20261027-094813_baseline-clean.json`.
+
+- Đúng nguyên nhân gốc 28/28 ở cả direct và twin (trên ca có chẩn đoán). Loại lỗi
+  23/28, hành động đầu đúng đáp án 23/28, Jaccard lan truyền 0,694 và 0,713.
+- Hồi phục: baseline 2/12, direct 10/30, twin 12/30. MTTR trên ca hồi phục 212 / 422 /
+  652 giây — tập ca hồi phục khác nhau nên không so trực tiếp được.
+- **Gây hại: direct 9, twin 10.** Hiệu mỗi ca (twin − direct) 0,03, khoảng tin cậy
+  bootstrap 95% [−0,27; 0,33]. Giả thuyết trung tâm KHÔNG được ủng hộ.
+- 17/19 hành động gây hại thuộc mức thấp (Bảng 2), áp thẳng không qua twin.
+- Twin chặn 4/6 lần thử; 2 lần twin phán tốt lên thì production không tốt lên (0/2).
+  Tự hoàn tác 8 lần. Độ trung thực twin 5/6 (`data/fidelity/20261027-071231_fidelity.json`).
+
+### v1 — thí nghiệm phụ `20261029-030608` (15 ca, ép `adjust_resources` qua twin)
+
+- Trên S1, S5, S6: gây hại 4, so với 10 của twin theo Bảng 2 và 9 của direct. Thời
+  gian agent mỗi ca 1 611 giây so với 1 228 giây (+31%). 0/15 ca hồi phục.
+
+### Độ nhạy của chỉ số gây hại (`data/analysis/do_nhay_gay_hai.md`)
+
+Chấm lại theo tổng thời gian chờ (lỗi xét trước, ngưỡng 20% như gốc, áp lên tổng):
+
+- Phiên chính: direct 9 → 8, twin 10 → 9. **Kết luận không đổi.**
+- Thí nghiệm phụ: 4 → 1. Cả 3 lần "gây hại" ở TH5 là độ trễ nhảy ở service nhỏ. Trên
+  S1, S5, S6, twin theo Bảng 2 gây hại 9, ép qua twin còn 1: tác dụng của cổng vào
+  twin MẠNH hơn con số định nghĩa gốc cho thấy.
+
+### v2 — đang chạy
+
+Đăng ký trước: `docs/v2-dang-ky-truoc.md`. Ba phiên `v2-main`, `v2-twin120`,
+`v2-twin600`, chạy bằng `scripts/v2_pipeline.sh`. Số liệu điền khi phiên xong.
