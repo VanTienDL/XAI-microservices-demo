@@ -136,6 +136,10 @@ lịch sử thay đổi hay chỉ đọc tên biến.
   `scripts/v2_check.py` trên cluster thật đạt history, rollback, h2 (twin, h1 đang
   chạy lúc đóng băng — autostart chỉ đi tiếp khi đạt 6/6).
 
+- **Đóng băng lại 2026-11-11: code `6185761855dca667`, tag `v2-frozen-2`.** Đây là bản dùng
+  cho mọi phiên v2. Bản `810f4e26416f729b` (tag `v2-frozen`) chưa chạy ca nào của phiên
+  chính; lý do đổi ở mục 9.
+
 ## 9. Nhật ký thay đổi sau đóng băng
 
 Mọi thay đổi dưới đây xảy ra TRƯỚC khi có ca nào của phiên chính chạy (phiên chính
