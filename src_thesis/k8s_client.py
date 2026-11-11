@@ -575,19 +575,23 @@ class K8sClient:
         Điều kiện giống `kubectl rollout status`: controller đã thấy bản cấu hình mới
         nhất, và số pod hiện có, pod đã cập nhật, pod sẵn sàng đều bằng số khai báo.
         """
-        ns = namespace or self.namespace
         deadline = time.time() + timeout
         while time.time() < deadline:
-            d = self.apps.read_namespaced_deployment(deployment, ns)
-            want = int(d.spec.replicas or 0)
-            st = d.status
-            if ((st.observed_generation or 0) >= (d.metadata.generation or 0)
-                    and int(st.updated_replicas or 0) == want
-                    and int(st.replicas or 0) == want
-                    and int(st.available_replicas or 0) == want):
+            if self.rollout_complete(deployment, namespace):
                 return True
             time.sleep(2)
         return False
+
+    def rollout_complete(self, deployment: str, namespace: str | None = None) -> bool:
+        """Một lần kiểm, không chờ: mọi pod đang chạy đều mang cấu hình mới chưa."""
+        ns = namespace or self.namespace
+        d = self.apps.read_namespaced_deployment(deployment, ns)
+        want = int(d.spec.replicas or 0)
+        st = d.status
+        return ((st.observed_generation or 0) >= (d.metadata.generation or 0)
+                and int(st.updated_replicas or 0) == want
+                and int(st.replicas or 0) == want
+                and int(st.available_replicas or 0) == want)
 
     # ------------------------------------------------------------------
     # Nội bộ

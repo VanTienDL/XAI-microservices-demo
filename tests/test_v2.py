@@ -46,7 +46,9 @@ from src_thesis.graph import serialize
 from src_thesis.telemetry import snapshot as S
 from src_thesis.xai.schema import ProposedAction
 from tests import test_guards as G
-from tests.test_guards import FakeK8s, act
+from tests.test_guards import DEFAULT_STATE, FakeK8s, act
+
+DEFAULT_TWIN = DEFAULT_STATE["default"]
 
 # ----------------------------------------------------------------------
 # API GIA cho code that cua k8s_client
@@ -255,6 +257,36 @@ def test_load_state_copies_any_env_but_not_loadgenerator():
     assert tw["currencyservice"]["replicas"] == 0
     assert tw["loadgenerator"]["env"]["TWIN"] == "1", "bo sinh tai cua twin giu nguyen"
     assert set(applied) == {"frontend", "currencyservice"}, applied
+
+
+def test_load_state_tolerates_rollout_stuck_like_production():
+    from src_thesis.agent import twin_manager as T
+
+    class Slow(FakeK8s):
+        prod_done = False
+
+        def wait_ready(self, dep, timeout=120, namespace=None):
+            return False if namespace == "twin" else True
+
+        def rollout_complete(self, dep, namespace=None):
+            return Slow.prod_done
+
+    FakeK8s.reset()
+    FakeK8s.state["twin"] = copy.deepcopy(FakeK8s.state["default"])
+    Slow().set_cpu_limit("productcatalogservice", "10m")
+    orig = T.LOAD_READY_TIMEOUT_S
+    try:
+        applied = TwinManager(k8s=Slow()).load_state()
+        assert applied["productcatalogservice"].get("rollout") ==             "chua xong, giong production", applied
+        Slow.prod_done = True
+        FakeK8s.state["twin"] = copy.deepcopy(DEFAULT_TWIN)
+        try:
+            TwinManager(k8s=Slow()).load_state()
+            raise AssertionError("production xong ma twin ket thi phai bao loi")
+        except RuntimeError:
+            pass
+    finally:
+        T.LOAD_READY_TIMEOUT_S = orig
 
 
 # ----------------------------------------------------------------------

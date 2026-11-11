@@ -60,6 +60,10 @@ TWIN_DEPLOYMENTS = [
 # trong infra/twin/loadgenerator.yaml), chép đè thì nó bắn tải vào production.
 NOT_SYNCED = ("loadgenerator",)
 
+# Cho twin chay xong cau hinh vua nap toi da bao lau. 300 giay thay vi 180: pod bi
+# bop CPU khoi dong cham hon han.
+LOAD_READY_TIMEOUT_S = 300
+
 # Ngưỡng RAM tối thiểu còn trống trong WSL trước khi cho dựng twin, tính bằng MiB.
 # Số đo thật: 14 pod của bản chính dùng khoảng 620 MiB, twin có 9 pod nhẹ hơn nên
 # ước khoảng 400 MiB. Để 700 cho có biên.
@@ -265,16 +269,31 @@ class TwinManager:
         # k3s (2026-10-07), twin chep tran CPU 500m cua production nhung node da het
         # cho, pod moi treo Pending, va pod CU van chay cau hinh cu. Ham van tra ve
         # "da nap", twin do va phan quyet tren mot ban sao SAI ma khong ai biet.
-        stuck = []
+        #
+        # NHUNG chi coi la loi khi PRODUCTION da chay xong cau hinh do. Bop CPU xuong
+        # 10m co the lam pod moi khong bao gio san sang (khoi dong khong du CPU), va
+        # Kubernetes giu pod cu phuc vu tiep — tren production cung vay. Twin ket y
+        # het production la phan anh TRUNG THUC, khong phai twin hong. Coi no la loi
+        # thi twin chan co he thong moi hanh dong o kich ban bop CPU vi mot ly do ky
+        # thuat, va chinh ket luan "twin chan hanh dong co hai" bi lam gia.
+        stuck, mirrored = [], []
         for dep in applied:
-            if not self.k8s.wait_ready(dep, timeout=180, namespace=self.namespace):
-                phases = sorted({p.phase for p in self.k8s.list_pods(self.namespace)
-                                 if p.deployment == dep and not p.ready})
-                stuck.append(f"{dep} ({', '.join(phases) or 'chua san sang'})")
+            if self.k8s.wait_ready(dep, timeout=LOAD_READY_TIMEOUT_S,
+                                   namespace=self.namespace):
+                continue
+            if not self.k8s.rollout_complete(dep, namespace=source_namespace):
+                mirrored.append(dep)
+                continue
+            phases = sorted({p.phase for p in self.k8s.list_pods(self.namespace)
+                             if p.deployment == dep and not p.ready})
+            stuck.append(f"{dep} ({', '.join(phases) or 'chua san sang'})")
+        for dep in mirrored:
+            applied[dep]["rollout"] = "chua xong, giong production"
         if stuck:
             raise RuntimeError(
                 f"twin khong nap duoc trang thai production: {'; '.join(stuck)} chua "
-                f"chay cau hinh moi sau 180s. Pending thuong la node het CPU, kiem tra: "
+                f"chay cau hinh moi sau {LOAD_READY_TIMEOUT_S}s trong khi production da "
+                f"chay xong. Pending thuong la node het CPU, kiem tra: "
                 f"kubectl describe pod -n {self.namespace}")
 
         return applied

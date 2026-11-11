@@ -165,6 +165,9 @@ class FakeK8s:
     def wait_ready(self, *a, **k):
         return True
 
+    def rollout_complete(self, *a, **k):
+        return True
+
     def deployment_configs(self, namespace=None, env_keys=None):
         out = {}
         for name, d in FakeK8s.state[namespace or self.namespace].items():
