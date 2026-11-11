@@ -195,7 +195,9 @@ def check_h1(k8s, baseline, scen) -> dict:
         snap = take_snapshot(label="v2check-h1", baseline=baseline, changes_since=t0)
         d = snap.to_dict()
         slow = [f"{e['source']}->{e['target']}" for e in d["diff"].get("slow_edges", [])]
-        cpu = d.get("cpu", {}).get("currencyservice")
+        # cpu_vs_limit dat khoa theo TEN POD, khong theo ten service.
+        cpu = {p: v for p, v in d.get("cpu", {}).items()
+               if p.startswith("currencyservice")}
         sec = change_section(snap.to_prompt_text())
         say(f"  slow_edges: {slow}")
         say(f"  cpu currencyservice: {cpu}")
