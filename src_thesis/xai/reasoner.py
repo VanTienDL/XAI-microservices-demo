@@ -38,6 +38,21 @@ from src_thesis.xai.prompt_templates import (
 from src_thesis.xai.schema import Explanation
 
 MAX_RETRIES = 3
+
+# Mat ket noi toi nha cung cap: thu lai toi da bay nhieu lan, cho tang dan 5, 10, 20,
+# 40, 60, 60... giay — tong khoang 15 phut. Ban cu thu lai MAI MAI moi 5 giay, nen mang
+# may ao dut vai gio la bo chay thi nghiem dung im suot vai gio.
+MAX_CONNECTION_RETRIES = 18
+
+
+class LLMUnavailable(RuntimeError):
+    """Không gọi được LLM vì lỗi HẠ TẦNG (mất kết nối, máy chủ lỗi, hết hạn mức, sai
+    khóa) — khác với LLM trả lời sai khuôn.
+
+    Ném lỗi thay vì trả `ok=False`: trả `ok=False` thì ca được lưu như một ca "agent
+    không chẩn đoán được", tức lỗi hạ tầng bị chấm thành lỗi của LLM. Ném lỗi thì bộ
+    chạy bỏ ca đó và chạy lại ở lượt sau (`EvalRunner.run_all`).
+    """
 CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "llm_cache"
 
 # Đổi số này mỗi khi sửa prompt, để cache cũ không bị dùng nhầm cho prompt mới.
@@ -254,6 +269,10 @@ class XaiReasoner:
                                  model=self.model, attempts=0)
         attempt = 0
         rate_waits = 0
+        conn_errors = 0
+        # True khi lan that bai CUOI CUNG la do ha tang chu khong phai do LLM tra
+        # loi sai khuon. Quyet dinh nem LLMUnavailable hay tra ket qua binh thuong.
+        api_failure = False
 
         while attempt < self.max_retries:
             try:
@@ -308,6 +327,7 @@ class XaiReasoner:
                         result.errors.append(
                             f"bi chan han muc {rate_waits} lan lien tiep, bo cuoc: "
                             + body[:400])
+                        api_failure = True
                         break
                     wait = self._retry_after_seconds(e)
                     print(f"    [han muc] bi chan, cho {wait:.0f}s "
@@ -318,13 +338,20 @@ class XaiReasoner:
                 attempt += 1
                 result.attempts = attempt
                 result.errors.append(f"API {e.status_code}: {body[:400]}")
+                api_failure = True
                 if e.status_code < 500:
                     break
                 continue
             except APIConnectionError as e:
-                result.errors.append(f"mat ket noi: {e}")
-                time.sleep(5)
+                conn_errors += 1
+                result.errors.append(f"mat ket noi lan {conn_errors}: {e}")
+                api_failure = True
+                if conn_errors >= MAX_CONNECTION_RETRIES:
+                    break
+                time.sleep(min(60, 5 * 2 ** min(conn_errors - 1, 4)))
                 continue
+
+            api_failure = False
 
             attempt += 1
             result.attempts = attempt
@@ -351,6 +378,8 @@ class XaiReasoner:
                 {"role": "user", "content": build_retry_prompt(raw, err)},
             ]
 
+        if result.explanation is None and api_failure:
+            raise LLMUnavailable(result.errors[-1] if result.errors else "khong ro")
         return result
 
     # ------------------------------------------------------------------

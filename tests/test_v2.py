@@ -16,6 +16,7 @@ Phép thử trên cluster thật nằm ở `scripts/v2_check.py`.
 from __future__ import annotations
 
 import copy
+import json
 import sys
 import traceback
 from datetime import datetime, timezone
@@ -422,6 +423,71 @@ def test_runner_restores_reference_config():
         assert FakeK8s().deployment_configs() == r.config_reference
     finally:
         R.wait_for_settled_pods = orig
+
+
+def _fake_reasoner(responses):
+    """XaiReasoner that, chi thay client goi API bang hang doi tra loi/loi gia."""
+    import httpx
+    from openai import APIConnectionError
+    from src_thesis.xai import reasoner as RS
+
+    class Msg:
+        def __init__(self, content):
+            self.message = type("M", (), {"content": content})()
+
+    class Resp:
+        def __init__(self, content):
+            self.choices = [Msg(content)]
+            self.usage = type("U", (), {"prompt_tokens": 10, "completion_tokens": 5})()
+
+    class Client:
+        def __init__(self):
+            self.chat = self
+            self.completions = self
+            self.calls = 0
+
+        def create(self, **kw):
+            self.calls += 1
+            item = responses.pop(0) if responses else "conn"
+            if item == "conn":
+                raise APIConnectionError(request=httpx.Request("POST", "http://x"))
+            return Resp(item)
+
+    r = object.__new__(RS.XaiReasoner)
+    r._strict_ok, r._schema, r.include_example = True, {}, False
+    r.provider = type("P", (), {"name": "fake"})()
+    r.model, r.max_retries, r.max_tokens, r.temperature = "m", 3, 100, 0.0
+    r.max_rate_limit_waits, r.client = 2, Client()
+    return r, RS
+
+
+GOOD = json.dumps({
+    "root_cause_service": "currencyservice", "fault_type": "crash", "confidence": 0.9,
+    "reasoning_chain": ["x"], "propagation_path": [], "evidence": ["x"],
+    "proposed_actions": [{"action": "scale_up", "target": "currencyservice",
+                          "params": [], "risk_class": "easy", "rationale": "x",
+                          "preconditions": []}]})
+
+
+def test_llm_outage_raises_instead_of_fake_result():
+    r, RS = _fake_reasoner([])
+    orig = RS.time.sleep
+    RS.time.sleep = lambda s: None
+    try:
+        try:
+            r._call_with_retry("x")
+            raise AssertionError("mat ket noi keo dai phai nem LLMUnavailable")
+        except RS.LLMUnavailable:
+            pass
+        assert r.client.calls == RS.MAX_CONNECTION_RETRIES,             "phai co tran so lan thu, ban cu thu mai mai"
+        r, RS = _fake_reasoner(["conn", "conn", GOOD])
+        res = r._call_with_retry("x")
+        assert res.ok, "dut mang ngan roi goi lai duoc thi phai chay binh thuong"
+        r, RS = _fake_reasoner(["khong phai json"] * 3)
+        res = r._call_with_retry("x")
+        assert not res.ok, "LLM tra sai khuon la ket qua that, khong nem loi"
+    finally:
+        RS.time.sleep = orig
 
 
 def main() -> int:
