@@ -113,18 +113,19 @@ scenarios:
 
   - id: H1
     held_out: true
-    fault: F4
-    target: currencyservice
-    params:
-      cpu: 10m
+    fault: F2
+    target: shippingservice
     wait_after_inject_s: 330
     description: >
-      Bóp trần CPU của currencyservice xuống 10m. Cùng loại lỗi với S4, S5 nhưng ở
-      service chưa từng dùng khi chỉnh prompt; currencyservice được cả frontend lẫn
-      checkoutservice gọi.
+      Tắt hẳn shippingservice (về 0 bản sao). Thay cho bản H1 đầu tiên (bóp CPU
+      currencyservice) — đo 2026-11-11: dưới trần 10m, pod mới của currencyservice và
+      cả recommendationservice KHÔNG BAO GIỜ sẵn sàng, Kubernetes giữ pod cũ phục vụ
+      tiếp, nên lỗi không xảy ra và agent không thấy gì. Hạ về 0 bản sao thì lỗi chắc
+      chắn xảy ra. shippingservice chưa từng dùng khi chỉnh prompt.
     expected_symptom: >
-      Cạnh tới currencyservice chậm từ cả hai phía gọi, CPU của currencyservice chạm
-      trần, lịch sử thay đổi ghi trần CPU 200m -> 10m.
+      Cạnh lỗi từ frontend và checkoutservice tới shippingservice (dựng từ span phía
+      người gọi, vì shippingservice không phát trace); POD HEALTH báo NO PODS AT ALL.
+      Không hiện trong CONFIGURATION CHANGES vì đổi số bản sao không phải một phiên bản.
 
   - id: H2
     held_out: true

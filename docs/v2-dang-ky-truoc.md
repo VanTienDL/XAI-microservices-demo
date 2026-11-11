@@ -86,7 +86,7 @@ Kết quả nào cũng được báo cáo, kể cả khi bác bỏ giả thuyế
 | S4 | CPU `frontend` 10m | adjust_resources, scale_up, **rollback** | rollback mới thêm |
 | S5 | CPU `productcatalogservice` 10m | adjust_resources, scale_up, **rollback** | rollback mới thêm |
 | S6 | S1 + S2 | một trong các đáp án trên | |
-| H1 | CPU `currencyservice` 10m | adjust_resources, scale_up, rollback | **giữ lại** |
+| H1 | `shippingservice` về 0 bản sao (thay bản đầu, xem mục 9) | scale_up | **giữ lại** |
 | H2 | `frontend` đổi `CURRENCY_SERVICE_ADDR` sang sai cổng | rollback | **giữ lại**, lỗi F5 |
 
 Lý do thêm `rollback` vào đáp án F4: ở v2, quay lui phiên bản trả trần CPU về giá
@@ -138,4 +138,25 @@ lịch sử thay đổi hay chỉ đọc tên biến.
 
 ## 9. Nhật ký thay đổi sau đóng băng
 
-(trống)
+Mọi thay đổi dưới đây xảy ra TRƯỚC khi có ca nào của phiên chính chạy (phiên chính
+chưa từng được bật dưới tag `v2-frozen`), và không ca nào gọi LLM trên H1, H2.
+
+1. **2026-11-11 — thay H1.** `scripts/v2_check.py` (2026-11-09) cho H1 bản đầu (bóp CPU
+   `currencyservice` xuống 10m) không sinh cạnh lỗi, chậm hay thiếu nào: agent coi là
+   hệ thống khỏe và dừng ngay. Đo thời gian chuyển cấu hình dưới trần 10m
+   (`scripts/v2_rollout_time.py`, `data/v2_check/20261111-130827_rollout_time.json`):
+   `frontend` 20 giây, `productcatalogservice` 10 giây, nhưng `currencyservice` và
+   `recommendationservice` quá 420 giây vẫn chưa xong — pod mới không đủ CPU để khởi
+   động, pod cũ (200m) phục vụ tiếp, lỗi không hề xảy ra. Thay bằng hạ
+   `shippingservice` về 0 bản sao (F2), đáp án `scale_up`. Cùng quy tắc với
+   KLTN-PLAN mục phase 2: kịch bản không tạo ra dấu hiệu quan sát được thì thay.
+   Hệ quả đã kiểm: S4, S5 KHÔNG bị hiện tượng này (10–20 giây).
+2. **2026-11-11 — twin nạp trạng thái.** Chỉ coi là lỗi khi production đã chạy xong cấu
+   hình mà twin chưa (trước đây: mọi lần twin chưa xong trong 180 giây). Hai bên cùng
+   kẹt là twin phản ánh đúng; báo lỗi thì twin chặn có hệ thống mọi hành động ở kịch
+   bản bóp CPU vì lý do kỹ thuật. Thời gian chờ 180 → 300 giây.
+3. **2026-11-11 — lỗi hạ tầng của LLM.** Mất kết nối có trần số lần thử (trước đây thử
+   mãi mãi); lỗi API (mất kết nối, 5xx, hết hạn mức, sai khóa) làm ca bị bỏ và chạy
+   lại thay vì lưu thành ca "LLM không chẩn đoán được". LLM trả sai khuôn vẫn là kết
+   quả thật như trước.
+4. **2026-11-11 — đóng băng lại** thành tag `v2-frozen-2`, mã code ở mục 8.
