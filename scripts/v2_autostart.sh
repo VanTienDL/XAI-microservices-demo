@@ -5,7 +5,9 @@
 #   tmux new -d -s kltn-v2 'bash scripts/v2_autostart.sh'
 #   tail -f data/vm-gcp/logs/v2-autostart.log
 #
-# 1. Cho scripts/v2_check.py (tmux v2check) xong; khong dat 6/6 thi DUNG.
+# 1. Chay scripts/v2_check.py voi cac phep thu trong CHECKS (mac dinh: h1); khong
+#    dat het thi DUNG. Lan 2026-11-09 da dat history, rollback, h2, twin tren dung
+#    code nay; chi kich ban H1 thay doi nen chi kiem lai H1.
 # 2. Chay thu 2 ca S2 (phien v2-pilot, KHONG tinh vao ket qua).
 # 3. scripts/v2_pilot_gate.py kiem 2 ca do; khong qua cong thi DUNG.
 # 4. Bat scripts/v2_pipeline.sh trong chinh phien tmux nay.
@@ -23,13 +25,13 @@ stamp() { echo "=== $(date -u '+%F %T') UTC: $*"; }
 
 stamp "BAT DAU autostart, git $(git rev-parse --short HEAD)"
 
-while tmux has-session -t v2check 2>/dev/null; do sleep 30; done
-last=$(tail -1 data/vm-gcp/logs/v2-check.log)
-stamp "v2_check: $last"
-case "$last" in
-    "6/6 dat"*) ;;
-    *) stamp "v2_check KHONG dat het, DUNG. Xem data/vm-gcp/logs/v2-check.log"; exit 1 ;;
-esac
+CHECKS=${CHECKS:-h1}
+stamp "v2_check --only $CHECKS"
+if ! $PY -u scripts/v2_check.py --only "$CHECKS"; then
+    stamp "v2_check KHONG dat het, DUNG. Phien chinh chua bat."
+    exit 1
+fi
+stamp "v2_check dat"
 
 stamp "chay thu v2-pilot: S2 x (direct, twin) x 1"
 $PY -u scripts/eval_run.py --resume v2-pilot --scenarios S2 \

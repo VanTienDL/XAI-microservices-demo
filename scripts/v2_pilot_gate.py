@@ -60,6 +60,11 @@ def main() -> int:
             if not r.get("reasoning_ran"):
                 continue
             n_prompts += 1
+            # Khoa API het han hay het han muc thi agent van "chay" va van luu
+            # prompt, chi khong co chan doan: phai chan o day.
+            if not r.get("reasoning_ok"):
+                problems.append(f"{name} vong {r.get('round_no')}: goi LLM that bai: "
+                                f"{r.get('reasoning_error', '')[:120]}")
             text = r.get("prompt_text") or ""
             if "CONFIGURATION CHANGES" not in text:
                 problems.append(f"{name} vong {r.get('round_no')}: prompt thieu "

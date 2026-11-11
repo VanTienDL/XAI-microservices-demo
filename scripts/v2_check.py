@@ -187,24 +187,41 @@ def check_twin(k8s, baseline, scen) -> dict:
 
 
 def check_h1(k8s, baseline, scen) -> dict:
+    """H1 phải là sự cố mà AGENT nhìn thấy.
+
+    Agent coi "không cạnh lỗi, không cạnh chậm, không cạnh thiếu" là khỏe và dừng
+    ngay (`react_loop._observe`). Lần kiểm 2026-11-09, bóp CPU currencyservice không
+    sinh cạnh nào: kịch bản vô hình, phải thay. Phép thử đọc service và loại lỗi từ
+    scenarios.yaml nên dùng được cho kịch bản thay thế.
+    """
+    h1 = scen["H1"]
+    target = h1["target"]
     t0 = time.time()
-    inject_scenario(FaultInjector(k8s=k8s), scen["H1"])
+    inject_scenario(FaultInjector(k8s=k8s), h1)
     try:
-        k8s.wait_ready("currencyservice", timeout=240)
+        if h1.get("fault") == "F2":
+            time.sleep(20)
+        else:
+            k8s.wait_ready(target, timeout=240)
         wait_symptom(SYMPTOM_WAIT_S)
         snap = take_snapshot(label="v2check-h1", baseline=baseline, changes_since=t0)
         d = snap.to_dict()
-        slow = [f"{e['source']}->{e['target']}" for e in d["diff"].get("slow_edges", [])]
-        # cpu_vs_limit dat khoa theo TEN POD, khong theo ten service.
-        cpu = {p: v for p, v in d.get("cpu", {}).items()
-               if p.startswith("currencyservice")}
+        diff = d["diff"]
+        edges = {k: [f"{e['source']}->{e['target']}" for e in diff.get(k, [])]
+                 for k in ("error_edges", "slow_edges", "missing_edges")}
+        sees = any(edges.values())
+        touches = any(target in e for es in edges.values() for e in es)
+        cpu = {p: v for p, v in d.get("cpu", {}).items() if p.startswith(target)}
         sec = change_section(snap.to_prompt_text())
-        say(f"  slow_edges: {slow}")
-        say(f"  cpu currencyservice: {cpu}")
+        say(f"  H1 = {h1.get('fault')} tren {target}")
+        say(f"  canh: {edges}")
+        say(f"  cpu {target}: {cpu}")
         say(sec)
-        ok = (any("currencyservice" in e for e in slow) or bool(cpu)) \
-            and "cpu limit" in sec
-        return {"ok": ok, "slow_edges": slow, "cpu": cpu, "section": sec}
+        # Doi cau hinh (F4, F5) phai hien trong lich su; ha ban sao (F2) thi khong
+        # phai mot phien ban, bang chung nam o POD HEALTH.
+        history_ok = True if h1.get("fault") == "F2" else target in sec
+        ok = sees and touches and history_ok
+        return {"ok": ok, "edges": edges, "cpu": cpu, "section": sec}
     finally:
         revert_all(k8s)
 
