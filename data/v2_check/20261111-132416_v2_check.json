@@ -1,0 +1,23 @@
+{
+  "h1": {
+    "ok": true,
+    "edges": {
+      "error_edges": [
+        "checkoutservice->shippingservice",
+        "frontend->checkoutservice",
+        "frontend->shippingservice"
+      ],
+      "slow_edges": [],
+      "missing_edges": [
+        "checkoutservice->emailservice",
+        "checkoutservice->paymentservice"
+      ]
+    },
+    "cpu": {},
+    "section": "CONFIGURATION CHANGES (last 6 min; pod template revisions, newest first; replica scaling is not a revision):\n  no pod template changes in this period"
+  },
+  "config_back_to_start": {
+    "ok": true,
+    "drift": []
+  }
+}

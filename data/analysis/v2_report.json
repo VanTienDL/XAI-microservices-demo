@@ -1,0 +1,425 @@
+{
+  "v1": {
+    "baseline": {
+      "n": 12,
+      "root_cause": [
+        0,
+        0
+      ],
+      "fault_type": [
+        0,
+        0
+      ],
+      "first_action": [
+        0,
+        0
+      ],
+      "propagation": null,
+      "recovered": [
+        2,
+        12
+      ],
+      "mttr_mean": 211.55,
+      "mttr_sd": 128.3398807853584,
+      "harmful_total": 0,
+      "harmful_per_case": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "harmful_by_risk": {
+        "easy": 0,
+        "medium": 0,
+        "hard": 0
+      },
+      "wasted_total": 0,
+      "helpful_total": 0,
+      "twin_rejected": 0,
+      "twin_better": 0,
+      "twin_transferred": 0,
+      "auto_undos": 0,
+      "took_mean": null,
+      "took_sd": null,
+      "tokens_mean": 0,
+      "cost_total": 0.0,
+      "restored_before_case": 0
+    },
+    "direct": {
+      "n": 30,
+      "root_cause": [
+        28,
+        28
+      ],
+      "fault_type": [
+        23,
+        28
+      ],
+      "first_action": [
+        23,
+        28
+      ],
+      "propagation": 0.6940500000000001,
+      "recovered": [
+        10,
+        30
+      ],
+      "mttr_mean": 422.26,
+      "mttr_sd": 243.3938792255147,
+      "harmful_total": 9,
+      "harmful_per_case": [
+        0.3,
+        0.1,
+        0.5333333333333333
+      ],
+      "harmful_by_risk": {
+        "easy": 8,
+        "medium": 0,
+        "hard": 1
+      },
+      "wasted_total": 16,
+      "helpful_total": 36,
+      "twin_rejected": 0,
+      "twin_better": 0,
+      "twin_transferred": 0,
+      "auto_undos": 0,
+      "took_mean": 640.333,
+      "took_sd": 389.35808094995855,
+      "tokens_mean": 10648.633333333333,
+      "cost_total": 0.1629,
+      "restored_before_case": 0
+    },
+    "twin_verified": {
+      "n": 30,
+      "root_cause": [
+        28,
+        28
+      ],
+      "fault_type": [
+        23,
+        28
+      ],
+      "first_action": [
+        23,
+        28
+      ],
+      "propagation": 0.7130964285714285,
+      "recovered": [
+        12,
+        30
+      ],
+      "mttr_mean": 652.075,
+      "mttr_sd": 533.0912750177027,
+      "harmful_total": 10,
+      "harmful_per_case": [
+        0.3333333333333333,
+        0.13333333333333333,
+        0.5666666666666667
+      ],
+      "harmful_by_risk": {
+        "easy": 9,
+        "medium": 0,
+        "hard": 1
+      },
+      "wasted_total": 17,
+      "helpful_total": 30,
+      "twin_rejected": 4,
+      "twin_better": 2,
+      "twin_transferred": 0,
+      "auto_undos": 8,
+      "took_mean": 807.7156666666666,
+      "took_sd": 576.8744682647579,
+      "tokens_mean": 10898.766666666666,
+      "cost_total": 0.1663,
+      "restored_before_case": 0
+    }
+  },
+  "v2": {
+    "baseline": {
+      "n": 12,
+      "root_cause": [
+        0,
+        0
+      ],
+      "fault_type": [
+        0,
+        0
+      ],
+      "first_action": [
+        0,
+        0
+      ],
+      "propagation": null,
+      "recovered": [
+        2,
+        12
+      ],
+      "mttr_mean": 120.9,
+      "mttr_sd": 0.1414213562373115,
+      "harmful_total": 0,
+      "harmful_per_case": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "harmful_by_risk": {
+        "easy": 0,
+        "medium": 0,
+        "hard": 0
+      },
+      "wasted_total": 0,
+      "helpful_total": 0,
+      "twin_rejected": 0,
+      "twin_better": 0,
+      "twin_transferred": 0,
+      "auto_undos": 0,
+      "took_mean": null,
+      "took_sd": null,
+      "tokens_mean": 0,
+      "cost_total": 0.0,
+      "restored_before_case": 0
+    },
+    "direct": {
+      "n": 30,
+      "root_cause": [
+        28,
+        28
+      ],
+      "fault_type": [
+        25,
+        28
+      ],
+      "first_action": [
+        28,
+        28
+      ],
+      "propagation": 0.71905,
+      "recovered": [
+        30,
+        30
+      ],
+      "mttr_mean": 634.14,
+      "mttr_sd": 220.38142264781726,
+      "harmful_total": 0,
+      "harmful_per_case": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "harmful_by_risk": {
+        "easy": 0,
+        "medium": 0,
+        "hard": 0
+      },
+      "wasted_total": 0,
+      "helpful_total": 30,
+      "twin_rejected": 0,
+      "twin_better": 0,
+      "twin_transferred": 0,
+      "auto_undos": 0,
+      "took_mean": 314.846,
+      "took_sd": 182.96923021136075,
+      "tokens_mean": 5687.566666666667,
+      "cost_total": 0.0869,
+      "restored_before_case": 0
+    },
+    "twin_verified": {
+      "n": 30,
+      "root_cause": [
+        26,
+        26
+      ],
+      "fault_type": [
+        23,
+        26
+      ],
+      "first_action": [
+        26,
+        26
+      ],
+      "propagation": 0.7076961538461538,
+      "recovered": [
+        28,
+        30
+      ],
+      "mttr_mean": 1343.425,
+      "mttr_sd": 739.934855303217,
+      "harmful_total": 2,
+      "harmful_per_case": [
+        0.06666666666666667,
+        0.0,
+        0.16666666666666666
+      ],
+      "harmful_by_risk": {
+        "easy": 0,
+        "medium": 0,
+        "hard": 2
+      },
+      "wasted_total": 0,
+      "helpful_total": 28,
+      "twin_rejected": 5,
+      "twin_better": 31,
+      "twin_transferred": 28,
+      "auto_undos": 2,
+      "took_mean": 1125.4613333333334,
+      "took_sd": 737.3053344523922,
+      "tokens_mean": 6489.933333333333,
+      "cost_total": 0.099,
+      "restored_before_case": 0
+    }
+  },
+  "G1_diff_harm": [
+    0.06666666666666667,
+    0.0,
+    0.16666666666666666
+  ],
+  "G2_diff_took": [
+    810.6153333333334,
+    547.7969999999998,
+    1085.7776666666666
+  ],
+  "G4_diff_harm_heldout": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "G5": {
+    "120": {
+      "n": 15,
+      "root_cause": [
+        15,
+        15
+      ],
+      "fault_type": [
+        14,
+        15
+      ],
+      "first_action": [
+        15,
+        15
+      ],
+      "propagation": 0.6666666666666666,
+      "recovered": [
+        14,
+        15
+      ],
+      "mttr_mean": 999.8428571428572,
+      "mttr_sd": 127.60464010303144,
+      "harmful_total": 0,
+      "harmful_per_case": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "harmful_by_risk": {
+        "easy": 0,
+        "medium": 0,
+        "hard": 0
+      },
+      "wasted_total": 0,
+      "helpful_total": 14,
+      "twin_rejected": 5,
+      "twin_better": 14,
+      "twin_transferred": 14,
+      "auto_undos": 0,
+      "took_mean": 686.87,
+      "took_sd": 138.99690525845736,
+      "tokens_mean": 6705.533333333334,
+      "cost_total": 0.0523,
+      "restored_before_case": 0
+    },
+    "300": {
+      "n": 15,
+      "root_cause": [
+        15,
+        15
+      ],
+      "fault_type": [
+        12,
+        15
+      ],
+      "first_action": [
+        15,
+        15
+      ],
+      "propagation": 0.6444466666666666,
+      "recovered": [
+        14,
+        15
+      ],
+      "mttr_mean": 1467.0928571428572,
+      "mttr_sd": 509.292876997548,
+      "harmful_total": 2,
+      "harmful_per_case": [
+        0.13333333333333333,
+        0.0,
+        0.3333333333333333
+      ],
+      "harmful_by_risk": {
+        "easy": 0,
+        "medium": 0,
+        "hard": 2
+      },
+      "wasted_total": 0,
+      "helpful_total": 14,
+      "twin_rejected": 3,
+      "twin_better": 16,
+      "twin_transferred": 14,
+      "auto_undos": 2,
+      "took_mean": 1222.2946666666667,
+      "took_sd": 622.2287750942077,
+      "tokens_mean": 6889.533333333334,
+      "cost_total": 0.0534,
+      "restored_before_case": 0
+    },
+    "600": {
+      "n": 15,
+      "root_cause": [
+        15,
+        15
+      ],
+      "fault_type": [
+        15,
+        15
+      ],
+      "first_action": [
+        15,
+        15
+      ],
+      "propagation": 0.61778,
+      "recovered": [
+        15,
+        15
+      ],
+      "mttr_mean": 2047.6266666666666,
+      "mttr_sd": 364.55106337730496,
+      "harmful_total": 0,
+      "harmful_per_case": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "harmful_by_risk": {
+        "easy": 0,
+        "medium": 0,
+        "hard": 0
+      },
+      "wasted_total": 0,
+      "helpful_total": 15,
+      "twin_rejected": 1,
+      "twin_better": 16,
+      "twin_transferred": 15,
+      "auto_undos": 0,
+      "took_mean": 1717.9066666666668,
+      "took_sd": 364.5372609735461,
+      "tokens_mean": 5770.466666666666,
+      "cost_total": 0.0458,
+      "restored_before_case": 0
+    }
+  },
+  "sessions": {
+    "20261027-094812": 72,
+    "v2-main": 96,
+    "v2-twin120": 15,
+    "v2-twin600": 15
+  }
+}

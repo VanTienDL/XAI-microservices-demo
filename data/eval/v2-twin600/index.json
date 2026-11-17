@@ -1,0 +1,816 @@
+{
+  "run_id": "v2-twin600",
+  "written_at_human": "2026-11-14 03:08:53",
+  "model": "gpt-4.1-mini",
+  "code": {
+    "code_sha": "6185761855dca667",
+    "n_files": 50,
+    "git_head": "e5d79e4a",
+    "git_dirty": false,
+    "prompt_version": "v7",
+    "model": "gpt-4.1-mini",
+    "extra_hard_actions": [
+      "adjust_resources",
+      "scale_down",
+      "scale_up"
+    ],
+    "twin_settle_seconds": 600
+  },
+  "baseline_source": "20261113-161102_baseline-clean.json (14 canh)",
+  "thresholds": {
+    "harmful_error_delta": 0.02,
+    "harmful_p95_ratio": 0.2,
+    "min_rate_for_effect": 0.3,
+    "baseline_give_up_s": 600
+  },
+  "n_cases": 15,
+  "by_mode": {
+    "twin_verified": {
+      "mode": "twin_verified",
+      "n_cases": 15,
+      "root_cause_accuracy": 1.0,
+      "root_cause_std": 0.0,
+      "propagation_mean": 0.6178,
+      "recovery_rate": 1.0,
+      "n_recovered": 15,
+      "n_censored": 0,
+      "mttr_mean_s": 2047.6,
+      "mttr_std_s": 364.6,
+      "harmful_total": 0,
+      "harmful_per_case": 0.0,
+      "wasted_total": 0,
+      "wasted_per_case": 0.0,
+      "unknown_effect_total": 0,
+      "rejected_by_twin_total": 1,
+      "tokens_per_case": 5770.5,
+      "cost_per_case": 0.003056,
+      "took_mean_s": 1717.9,
+      "blocked_by_precondition_total": 0,
+      "auto_undo_total": 0,
+      "drift_checks_total": 16,
+      "blocked_by_drift_total": 0,
+      "blocked_recovered_total": 1,
+      "drift_failure_rate": 0.0625,
+      "twin_better_total": 16,
+      "twin_transfer_rate": 0.9375
+    }
+  },
+  "cases": [
+    {
+      "scenario": "S1",
+      "mode": "twin_verified",
+      "repeat": 1,
+      "run_id": "S1_twin_verified_r1",
+      "root_cause_correct": true,
+      "propagation_jaccard": 0.6667,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 1900.1,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "rollback",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 100%; productcatalogservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "productcatalogservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4680,
+      "output_tokens": 464,
+      "cost_usd": 0.002614,
+      "took_s": 1570.4,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S1",
+      "mode": "twin_verified",
+      "repeat": 2,
+      "run_id": "S1_twin_verified_r2",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 1900.4,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "rollback",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 100%; productcatalogservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "productcatalogservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4534,
+      "output_tokens": 413,
+      "cost_usd": 0.002474,
+      "took_s": 1570.61,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S1",
+      "mode": "twin_verified",
+      "repeat": 3,
+      "run_id": "S1_twin_verified_r3",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 1910.6,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "rollback",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend loi giam 3.9 diem; productcatalogservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "productcatalogservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4582,
+      "output_tokens": 624,
+      "cost_usd": 0.002831,
+      "took_s": 1580.9,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S1",
+      "mode": "twin_verified",
+      "repeat": 4,
+      "run_id": "S1_twin_verified_r4",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 1899.7,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "rollback",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 100%; productcatalogservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "productcatalogservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4535,
+      "output_tokens": 452,
+      "cost_usd": 0.002537,
+      "took_s": 1570.05,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S1",
+      "mode": "twin_verified",
+      "repeat": 5,
+      "run_id": "S1_twin_verified_r5",
+      "root_cause_correct": true,
+      "propagation_jaccard": 0.6,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 1900.1,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "rollback",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 100%; productcatalogservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "productcatalogservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4582,
+      "output_tokens": 665,
+      "cost_usd": 0.002897,
+      "took_s": 1570.39,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S4",
+      "mode": "twin_verified",
+      "repeat": 1,
+      "run_id": "S4_twin_verified_r1",
+      "root_cause_correct": true,
+      "propagation_jaccard": 0.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "frontend",
+      "expected_root": "frontend",
+      "recovered": true,
+      "mttr_s": 1940.4,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "frontend",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 99%; cartservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "cartservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4662,
+      "output_tokens": 642,
+      "cost_usd": 0.002892,
+      "took_s": 1610.62,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S4",
+      "mode": "twin_verified",
+      "repeat": 2,
+      "run_id": "S4_twin_verified_r2",
+      "root_cause_correct": true,
+      "propagation_jaccard": 0.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "frontend",
+      "expected_root": "frontend",
+      "recovered": true,
+      "mttr_s": 1940.8,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "frontend",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 99%; cartservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "cartservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4626,
+      "output_tokens": 748,
+      "cost_usd": 0.003047,
+      "took_s": 1611.05,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S4",
+      "mode": "twin_verified",
+      "repeat": 3,
+      "run_id": "S4_twin_verified_r3",
+      "root_cause_correct": true,
+      "propagation_jaccard": 0.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "frontend",
+      "expected_root": "frontend",
+      "recovered": true,
+      "mttr_s": 1938.8,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "frontend",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 97%; cartservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "cartservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4627,
+      "output_tokens": 667,
+      "cost_usd": 0.002918,
+      "took_s": 1609.1,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S4",
+      "mode": "twin_verified",
+      "repeat": 4,
+      "run_id": "S4_twin_verified_r4",
+      "root_cause_correct": true,
+      "propagation_jaccard": 0.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "frontend",
+      "expected_root": "frontend",
+      "recovered": true,
+      "mttr_s": 1937.1,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "frontend",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 99%; cartservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "cartservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4625,
+      "output_tokens": 561,
+      "cost_usd": 0.002748,
+      "took_s": 1607.45,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S4",
+      "mode": "twin_verified",
+      "repeat": 5,
+      "run_id": "S4_twin_verified_r5",
+      "root_cause_correct": true,
+      "propagation_jaccard": 0.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "frontend",
+      "expected_root": "frontend",
+      "recovered": true,
+      "mttr_s": 2609.3,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "frontend",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 99%; cartservice p95 giam 100%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "cartservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 3,
+      "input_tokens": 9008,
+      "output_tokens": 1040,
+      "cost_usd": 0.005267,
+      "took_s": 2279.59,
+      "actions_rejected_by_twin": 1,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S5",
+      "mode": "twin_verified",
+      "repeat": 1,
+      "run_id": "S5_twin_verified_r1",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 1910.6,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 96%",
+          "degraded": [],
+          "improved": [
+            "frontend"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4471,
+      "output_tokens": 465,
+      "cost_usd": 0.002532,
+      "took_s": 1580.86,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S5",
+      "mode": "twin_verified",
+      "repeat": 2,
+      "run_id": "S5_twin_verified_r2",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 1918.1,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 96%",
+          "degraded": [],
+          "improved": [
+            "frontend"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4472,
+      "output_tokens": 524,
+      "cost_usd": 0.002627,
+      "took_s": 1588.41,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S5",
+      "mode": "twin_verified",
+      "repeat": 3,
+      "run_id": "S5_twin_verified_r3",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 1907.4,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 96%; cartservice p95 giam 47%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "cartservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4470,
+      "output_tokens": 580,
+      "cost_usd": 0.002716,
+      "took_s": 1577.68,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S5",
+      "mode": "twin_verified",
+      "repeat": 4,
+      "run_id": "S5_twin_verified_r4",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 1905.8,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 95%",
+          "degraded": [],
+          "improved": [
+            "frontend"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4474,
+      "output_tokens": 458,
+      "cost_usd": 0.002522,
+      "took_s": 1576.07,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    },
+    {
+      "scenario": "S5",
+      "mode": "twin_verified",
+      "repeat": 5,
+      "run_id": "S5_twin_verified_r5",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "productcatalogservice",
+      "expected_root": "productcatalogservice",
+      "recovered": true,
+      "mttr_s": 3195.2,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "adjust_resources",
+          "target": "productcatalogservice",
+          "verdict": "helpful",
+          "reason": "frontend p95 giam 97%",
+          "degraded": [],
+          "improved": [
+            "frontend"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 3,
+      "input_tokens": 8864,
+      "output_tokens": 1042,
+      "cost_usd": 0.005213,
+      "took_s": 2865.42,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 2,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 1,
+      "auto_undos": 0,
+      "twin_better": 2,
+      "twin_better_transferred": 1,
+      "notes": []
+    }
+  ]
+}

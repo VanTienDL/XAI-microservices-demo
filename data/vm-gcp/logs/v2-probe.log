@@ -1,0 +1,23 @@
+Anh nen: 20261029-030923_baseline-clean.json (2026-10-29 03:09:23, 14 canh)
+
+=== F4:currencyservice:10m ===
+  cho 330s
+  agent THAY su co: False  {'error_edges': 0, 'slow_edges': 0, 'missing_edges': 0}
+  RED currencyservice: {'service': 'currencyservice', 'request_rate': 8.0947, 'error_rate': 0.0, 'p50_ms': 0.25, 'p95_ms': 0.47, 'source': 'server'}
+  RED frontend: {'service': 'frontend', 'request_rate': 2.8982, 'error_rate': 0.0, 'p50_ms': 6.91, 'p95_ms': 14.74, 'source': 'server'}
+  CPU: {'currencyservice-65966b87f4-fv9s4': {'used_cores': 0.0063, 'limit_cores': 0.2, 'ratio': 0.032}, 'currencyservice-55d64c99d7-rz8tg': {'used_cores': 0.0, 'limit_cores': 0.01, 'ratio': 0.0}}
+  da hoan tac F4-currencyservice-cpu
+
+=== F4:recommendationservice:10m ===
+  1 pod tre hon 600s (tre nhat currencyservice-547c4f8b86-wx6ts, 12s), cho 593s
+Traceback (most recent call last):
+  File "/home/kltn/XAI-microservices-demo/scripts/v2_probe.py", line 105, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/home/kltn/XAI-microservices-demo/scripts/v2_probe.py", line 87, in main
+    wait_for_settled_pods(k8s, log=say)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/home/kltn/XAI-microservices-demo/src_thesis/eval/preflight.py", line 90, in wait_for_settled_pods
+    sleep(need)
+    ~~~~~^^^^^^
+KeyboardInterrupt

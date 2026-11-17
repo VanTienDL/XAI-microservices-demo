@@ -1,0 +1,127 @@
+{
+  "history": {
+    "ok": true,
+    "section": "CONFIGURATION CHANGES (last 0 min; pod template revisions, newest first; replica scaling is not a revision):\n  productcatalogservice revision 219 (current), 0.0 min ago, from revision 218, cause: not recorded: env EXTRA_LATENCY: (unset) -> \"6s\""
+  },
+  "rollback": {
+    "rollback": {
+      "action": "rollback",
+      "target": "productcatalogservice",
+      "namespace": "default",
+      "applied": true,
+      "verified": true,
+      "detail": "quay ve phien ban 220 (hien tai 221): env EXTRA_LATENCY: \"6s\" -> (unset)",
+      "undo_kind": "template",
+      "undo_args": {
+        "fields": {
+          "env": {
+            "EXTRA_LATENCY": "6s",
+            "PORT": "3550",
+            "DISABLE_PROFILER": "1"
+          },
+          "cpu_limit": "200m",
+          "cpu_request": "100m",
+          "image": "us-central1-docker.pkg.dev/online-boutique-ci/microservices-demo/productcatalogservice:v0.10.6"
+        },
+        "to_revision": 220
+      },
+      "error": "",
+      "took_s": 2.05,
+      "ok": true
+    },
+    "undo": {
+      "action": "undo_rollback",
+      "target": "productcatalogservice",
+      "namespace": "default",
+      "applied": true,
+      "verified": true,
+      "detail": "cau hinh ve lai truoc rollback",
+      "undo_kind": "none",
+      "undo_args": {},
+      "error": "",
+      "took_s": 0.0,
+      "ok": true
+    },
+    "ok": true
+  },
+  "h2": {
+    "ok": true,
+    "frontend": {
+      "service": "frontend",
+      "request_rate": 2.9117,
+      "error_rate": 0.765,
+      "p50_ms": 0.63,
+      "p95_ms": 13.62,
+      "source": "server"
+    },
+    "currencyservice": {
+      "service": "currencyservice",
+      "request_rate": 0.3509,
+      "error_rate": 0.0,
+      "p50_ms": 0.25,
+      "p95_ms": 0.47,
+      "source": "server"
+    },
+    "error_edges": [
+      "frontend->currencyservice"
+    ],
+    "section": "CONFIGURATION CHANGES (last 6 min; pod template revisions, newest first; replica scaling is not a revision):\n  frontend revision 69 (current), 5.7 min ago, from revision 68, cause: not recorded: env CURRENCY_SERVICE_ADDR: \"currencyservice:7000\" -> \"currencyservice:7001\"",
+    "diff": {
+      "missing_edges": 2,
+      "unexpected_edges": 0,
+      "error_edges": 1,
+      "slow_edges": 0,
+      "silent_services": 0
+    }
+  },
+  "twin": {
+    "load_state": {
+      "frontend": {
+        "config": "env CURRENCY_SERVICE_ADDR: \"currencyservice:7000\" -> \"currencyservice:7001\""
+      }
+    },
+    "rollback": {
+      "action": "rollback",
+      "target": "frontend",
+      "namespace": "twin",
+      "applied": true,
+      "verified": true,
+      "detail": "quay ve phien ban 70 (hien tai 71): env CURRENCY_SERVICE_ADDR: \"currencyservice:7001\" -> \"currencyservice:7000\"",
+      "undo_kind": "template",
+      "undo_args": {
+        "fields": {
+          "env": {
+            "PORT": "8080",
+            "PRODUCT_CATALOG_SERVICE_ADDR": "productcatalogservice:3550",
+            "CURRENCY_SERVICE_ADDR": "currencyservice:7001",
+            "CART_SERVICE_ADDR": "cartservice:7070",
+            "RECOMMENDATION_SERVICE_ADDR": "recommendationservice:8080",
+            "SHIPPING_SERVICE_ADDR": "shippingservice:50051",
+            "CHECKOUT_SERVICE_ADDR": "checkoutservice:5050",
+            "AD_SERVICE_ADDR": "adservice:9555",
+            "SHOPPING_ASSISTANT_SERVICE_ADDR": "shoppingassistantservice:80",
+            "ENABLE_PROFILER": "0"
+          },
+          "cpu_limit": "200m",
+          "cpu_request": "100m",
+          "image": "us-central1-docker.pkg.dev/online-boutique-ci/microservices-demo/frontend:v0.10.6"
+        },
+        "to_revision": 70
+      },
+      "error": "",
+      "took_s": 12.06,
+      "ok": true
+    },
+    "ok": true
+  },
+  "h1": {
+    "ok": false,
+    "slow_edges": [],
+    "cpu": null,
+    "section": "CONFIGURATION CHANGES (last 10 min; pod template revisions, newest first; replica scaling is not a revision):\n  currencyservice revision 2 (current), 9.5 min ago, from revision 1, cause: not recorded: cpu limit: 200m -> 10m; cpu request: 100m -> 10m"
+  },
+  "config_back_to_start": {
+    "ok": true,
+    "drift": []
+  }
+}

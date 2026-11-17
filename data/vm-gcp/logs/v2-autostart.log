@@ -1,0 +1,127 @@
+=== 2026-11-09 14:39:37 UTC: BAT DAU autostart, git 86d53041
+=== 2026-11-09 15:06:07 UTC: v2_check: 5/6 dat — /home/kltn/XAI-microservices-demo/data/v2_check/20261109-150606_v2_check.json
+=== 2026-11-09 15:06:07 UTC: v2_check KHONG dat het, DUNG. Xem data/vm-gcp/logs/v2-check.log
+=== 2026-11-11 13:10:48 UTC: BAT DAU autostart, git e5d79e4a
+=== 2026-11-11 13:10:48 UTC: kiem H1: v2_check --only h1
+Anh nen: 20261029-030923_baseline-clean.json (2026-10-29 03:09:23, 14 canh)
+
+=== h1 ===
+  2 pod tre hon 600s (tre nhat recommendationservice-5bbf468d8b-vsmnp, 150s), cho 455s
+  cho trieu chung on dinh 330s
+  H1 = F2 tren shippingservice
+  canh: {'error_edges': ['checkoutservice->shippingservice', 'frontend->checkoutservice', 'frontend->shippingservice'], 'slow_edges': [], 'missing_edges': ['checkoutservice->emailservice', 'checkoutservice->paymentservice']}
+  cpu shippingservice: {}
+CONFIGURATION CHANGES (last 6 min; pod template revisions, newest first; replica scaling is not a revision):
+  no pod template changes in this period
+  da hoan tac F2-shippingservice-crash
+--> h1: DAT
+
+Cau hinh ve dung luc dau: DAT
+2/2 dat — /home/kltn/XAI-microservices-demo/data/v2_check/20261111-132416_v2_check.json
+=== 2026-11-11 13:24:16 UTC: H1 dat
+=== 2026-11-11 13:24:16 UTC: chay thu v2-pilot: S2 x (direct, twin) x 1
+CANH BAO: --repeats 1 it hon 5.
+Muc 8 KLTN.md doi toi thieu 5 lan moi kich ban de co do lech chuan.
+LLM dao dong manh, duoi 5 lan thi con so khong ket luan duoc gi.
+
+Phien: v2-pilot   ghi vao /home/kltn/XAI-microservices-demo/data/eval/v2-pilot
+LLM  : openai / gpt-4.1-mini (cache TAT)
+Code : 6185761855dca667 (50 file, git e5d79e4a), prompt v7
+Ep qua twin: adjust_resources, scale_down, scale_up (khac Bang 2 de cuong)
+Quan sat tren twin: 300s, cua so watch production: 300s
+  1 pod tre hon 600s (tre nhat shippingservice-768bf5c46b-bk78s, 4s), cho 600s
+Chup anh nen cho ca phien...
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+  nen moi: 20261111-133419_baseline-clean.json — 14 canh, 2137 span
+  so voi nen truoc (20261029-030923_baseline-clean.json):
+  canh: 14 -> 14, chung 14
+  do tre trung vi doi 0.93 lan, canh lech nhat 2.65 lan
+
+Ke hoach: 2 ca, da co 0, se chay 2
+Uoc luong: 0.8 gio
+
+
+======================================================================
+CA S2_direct_r1
+======================================================================
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S2: F2 vao currencyservice
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 3 canh loi, 0 canh cham, 7 canh thieu
+    chan doan currencyservice / crash
+    hanh dong scale_up tren currencyservice [hard]
+  vong 2: 0 canh loi, 0 canh cham, 0 canh thieu
+  hoan tac scale_up tren currencyservice: OK — so ban sao ve lai 0 (yeu cau 0)
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  da ghi: S2_direct_r1.json
+  tien do: 1/2
+
+======================================================================
+CA S2_twin_verified_r1
+======================================================================
+  1 pod tre hon 600s (tre nhat currencyservice-5bcd4978-w2jcb, 12s), cho 593s
+  chup anh NEN (lan 1/6)...
+  anh nen SACH
+Tiem S2: F2 vao currencyservice
+  F2-currencyservice-crash -> currencyservice (crash)
+  cho trieu chung on dinh: 330s
+    con 270s
+    con 210s
+    con 150s
+    con 90s
+    con 30s
+  vong 1: 3 canh loi, 0 canh cham, 7 canh thieu
+    chan doan currencyservice / crash
+    hanh dong scale_up tren currencyservice [hard]
+    twin: BETTER
+  vong 2: 0 canh loi, 0 canh cham, 0 canh thieu
+  hoan tac scale_up tren currencyservice: OK — so ban sao ve lai 0 (yeu cau 0)
+  hoan tac F2-currencyservice-crash: currencyservice san sang = True
+  da ghi: S2_twin_verified_r1.json
+  tien do: 2/2
+
+Xong 2/2 ca. Tong hop: /home/kltn/XAI-microservices-demo/data/eval/v2-pilot/index.json
+
+Phien v2-pilot   model gpt-4.1-mini
+Anh nen: 20261111-133419_baseline-clean.json (14 canh)
+So ca  : 2
+Nguong harmful: loi tang >= 0.02 hoac p95 tang >= 0.2
+Nguong du lieu: chi ket luan khi >= 0.3 req/s
+
+--- direct (1 ca) ---
+  chi so 1 root cause : 100.0% (do lech 0.000)
+  chi so 2 propagation: 1.000
+  chi so 3 MTTR       : 648s tren 1 ca hoi phuc
+           khong hoi phuc: 0/1 ca (bi cat cut, KHONG tinh vao trung binh tren)
+  chi so 4 harmful    : 0 (0.00 moi ca)
+  chi so 5 wasted     : 0 (0.00 moi ca)
+  bi twin chan        : 0
+  chi so 6 token/ca    : 4940   tien/ca: $0.00249
+  thoi gian trung binh: 318s
+
+--- twin_verified (1 ca) ---
+  chi so 1 root cause : 100.0% (do lech 0.000)
+  chi so 2 propagation: 1.000
+  chi so 3 MTTR       : 1314s tren 1 ca hoi phuc
+           khong hoi phuc: 0/1 ca (bi cat cut, KHONG tinh vao trung binh tren)
+  chi so 4 harmful    : 0 (0.00 moi ca)
+  chi so 5 wasted     : 0 (0.00 moi ca)
+  bi twin chan        : 0
+  chuyen giao twin->prod: 100% tren 1 lan twin noi better
+  that bai do do lech : 0% tren 1 lan doi sanh (lech cau hinh 0, tu khoe truoc khi ap 0)
+  chi so 6 token/ca    : 4899   tien/ca: $0.00243
+  thoi gian trung binh: 984s
+
+chi so 7 twin fidelity: 83.3% (5/6) — 20261027-071231_fidelity.json
+=== 2026-11-11 14:17:27 UTC: chay thu ket thuc, ma thoat 0
+Cong chay thu v2-pilot: 2 ca, 2 prompt
+QUA CONG
+=== 2026-11-11 14:17:27 UTC: qua cong, vao pipeline (log rieng: data/vm-gcp/logs/v2-pipeline.log)

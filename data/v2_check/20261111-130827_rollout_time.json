@@ -1,0 +1,52 @@
+{
+  "frontend": {
+    "rollout_done_s": 20.0,
+    "pods": [
+      [
+        "frontend-69fcc9bc8-gxtbl",
+        true,
+        "Running"
+      ]
+    ]
+  },
+  "productcatalogservice": {
+    "rollout_done_s": 10.0,
+    "pods": [
+      [
+        "productcatalogservice-7c96dcfd66-w2cd4",
+        true,
+        "Running"
+      ]
+    ]
+  },
+  "currencyservice": {
+    "rollout_done_s": null,
+    "pods": [
+      [
+        "currencyservice-547c4f8b86-wx6ts",
+        true,
+        "Running"
+      ],
+      [
+        "currencyservice-74f5d99cfd-tnmbm",
+        false,
+        "Running"
+      ]
+    ]
+  },
+  "recommendationservice": {
+    "rollout_done_s": null,
+    "pods": [
+      [
+        "recommendationservice-6b576f5f98-rlhks",
+        true,
+        "Running"
+      ],
+      [
+        "recommendationservice-84dbcd848b-6czv6",
+        false,
+        "Running"
+      ]
+    ]
+  }
+}

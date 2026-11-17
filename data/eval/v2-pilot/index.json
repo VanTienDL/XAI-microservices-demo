@@ -1,0 +1,190 @@
+{
+  "run_id": "v2-pilot",
+  "written_at_human": "2026-11-11 14:17:27",
+  "model": "gpt-4.1-mini",
+  "code": {
+    "code_sha": "6185761855dca667",
+    "n_files": 50,
+    "git_head": "e5d79e4a",
+    "git_dirty": false,
+    "prompt_version": "v7",
+    "model": "gpt-4.1-mini",
+    "extra_hard_actions": [
+      "adjust_resources",
+      "scale_down",
+      "scale_up"
+    ],
+    "twin_settle_seconds": 300
+  },
+  "baseline_source": "20261111-133419_baseline-clean.json (14 canh)",
+  "thresholds": {
+    "harmful_error_delta": 0.02,
+    "harmful_p95_ratio": 0.2,
+    "min_rate_for_effect": 0.3,
+    "baseline_give_up_s": 600
+  },
+  "n_cases": 2,
+  "by_mode": {
+    "direct": {
+      "mode": "direct",
+      "n_cases": 1,
+      "root_cause_accuracy": 1.0,
+      "root_cause_std": 0.0,
+      "propagation_mean": 1.0,
+      "recovery_rate": 1.0,
+      "n_recovered": 1,
+      "n_censored": 0,
+      "mttr_mean_s": 648.2,
+      "mttr_std_s": 0.0,
+      "harmful_total": 0,
+      "harmful_per_case": 0.0,
+      "wasted_total": 0,
+      "wasted_per_case": 0.0,
+      "unknown_effect_total": 0,
+      "rejected_by_twin_total": 0,
+      "tokens_per_case": 4940.0,
+      "cost_per_case": 0.002492,
+      "took_mean_s": 318.3,
+      "blocked_by_precondition_total": 0,
+      "auto_undo_total": 0,
+      "drift_checks_total": 0,
+      "blocked_by_drift_total": 0,
+      "blocked_recovered_total": 0,
+      "drift_failure_rate": null,
+      "twin_better_total": 0,
+      "twin_transfer_rate": null
+    },
+    "twin_verified": {
+      "mode": "twin_verified",
+      "n_cases": 1,
+      "root_cause_accuracy": 1.0,
+      "root_cause_std": 0.0,
+      "propagation_mean": 1.0,
+      "recovery_rate": 1.0,
+      "n_recovered": 1,
+      "n_censored": 0,
+      "mttr_mean_s": 1314.1,
+      "mttr_std_s": 0.0,
+      "harmful_total": 0,
+      "harmful_per_case": 0.0,
+      "wasted_total": 0,
+      "wasted_per_case": 0.0,
+      "unknown_effect_total": 0,
+      "rejected_by_twin_total": 0,
+      "tokens_per_case": 4899.0,
+      "cost_per_case": 0.002426,
+      "took_mean_s": 984.1,
+      "blocked_by_precondition_total": 0,
+      "auto_undo_total": 0,
+      "drift_checks_total": 1,
+      "blocked_by_drift_total": 0,
+      "blocked_recovered_total": 0,
+      "drift_failure_rate": 0.0,
+      "twin_better_total": 1,
+      "twin_transfer_rate": 1.0
+    }
+  },
+  "cases": [
+    {
+      "scenario": "S2",
+      "mode": "direct",
+      "repeat": 1,
+      "run_id": "S2_direct_r1",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "currencyservice",
+      "expected_root": "currencyservice",
+      "recovered": true,
+      "mttr_s": 648.2,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "scale_up",
+          "target": "currencyservice",
+          "verdict": "helpful",
+          "reason": "frontend loi giam 53.2 diem; cartservice p95 giam 21%",
+          "degraded": [],
+          "improved": [
+            "frontend",
+            "cartservice"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4510,
+      "output_tokens": 430,
+      "cost_usd": 0.002492,
+      "took_s": 318.27,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 0,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 0,
+      "twin_better_transferred": 0,
+      "notes": []
+    },
+    {
+      "scenario": "S2",
+      "mode": "twin_verified",
+      "repeat": 1,
+      "run_id": "S2_twin_verified_r1",
+      "root_cause_correct": true,
+      "propagation_jaccard": 1.0,
+      "fault_type_correct": true,
+      "action_correct": true,
+      "predicted_root": "currencyservice",
+      "expected_root": "currencyservice",
+      "recovered": true,
+      "mttr_s": 1314.1,
+      "censored_at_s": null,
+      "harmful_actions": 0,
+      "wasted_actions": 0,
+      "helpful_actions": 1,
+      "unknown_effect_actions": 0,
+      "action_effects": [
+        {
+          "action": "scale_up",
+          "target": "currencyservice",
+          "verdict": "helpful",
+          "reason": "frontend loi giam 63.7 diem",
+          "degraded": [],
+          "improved": [
+            "frontend"
+          ],
+          "measured": [
+            "frontend",
+            "productcatalogservice",
+            "cartservice"
+          ]
+        }
+      ],
+      "rounds_used": 2,
+      "input_tokens": 4510,
+      "output_tokens": 389,
+      "cost_usd": 0.002426,
+      "took_s": 984.12,
+      "actions_rejected_by_twin": 0,
+      "blocked_by_precondition": 0,
+      "drift_checks": 1,
+      "blocked_by_drift": 0,
+      "blocked_recovered": 0,
+      "auto_undos": 0,
+      "twin_better": 1,
+      "twin_better_transferred": 1,
+      "notes": []
+    }
+  ]
+}

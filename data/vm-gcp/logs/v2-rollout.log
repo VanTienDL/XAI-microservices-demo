@@ -1,0 +1,5 @@
+frontend: xong sau 20.0s  pods=[('frontend-69fcc9bc8-gxtbl', True, 'Running')]
+productcatalogservice: xong sau 10.0s  pods=[('productcatalogservice-7c96dcfd66-w2cd4', True, 'Running')]
+currencyservice: CHUA XONG sau 420s  pods=[('currencyservice-547c4f8b86-wx6ts', True, 'Running'), ('currencyservice-74f5d99cfd-tnmbm', False, 'Running')]
+recommendationservice: CHUA XONG sau 420s  pods=[('recommendationservice-6b576f5f98-rlhks', True, 'Running'), ('recommendationservice-84dbcd848b-6czv6', False, 'Running')]
+Ghi /home/kltn/XAI-microservices-demo/data/v2_check/20261111-130827_rollout_time.json

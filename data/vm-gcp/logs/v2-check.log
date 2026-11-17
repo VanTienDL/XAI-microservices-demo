@@ -1,0 +1,45 @@
+Anh nen: 20261029-030923_baseline-clean.json (2026-10-29 03:09:23, 14 canh)
+
+=== history ===
+CONFIGURATION CHANGES (last 0 min; pod template revisions, newest first; replica scaling is not a revision):
+  productcatalogservice revision 219 (current), 0.0 min ago, from revision 218, cause: not recorded: env EXTRA_LATENCY: (unset) -> "6s"
+  da hoan tac F1-productcatalogservice-latency
+--> history: DAT
+
+=== rollback ===
+  2 pod tre hon 600s (tre nhat productcatalogservice-5d8f457d6f-lwtqj, 3s), cho 602s
+  rollback: quay ve phien ban 220 (hien tai 221): env EXTRA_LATENCY: "6s" -> (unset) -> EXTRA_LATENCY da go = True
+  hoan tac rollback: cau hinh ve lai truoc rollback -> EXTRA_LATENCY tro lai = True
+  da hoan tac F1-productcatalogservice-latency
+--> rollback: DAT
+
+=== h2 ===
+  2 pod tre hon 600s (tre nhat productcatalogservice-8c4ddffcd-n757s, 2s), cho 603s
+  cho trieu chung on dinh 330s
+  frontend error_rate=0.765  currencyservice error_rate=0.0
+  error_edges: ['frontend->currencyservice']
+CONFIGURATION CHANGES (last 6 min; pod template revisions, newest first; replica scaling is not a revision):
+  frontend revision 69 (current), 5.7 min ago, from revision 68, cause: not recorded: env CURRENCY_SERVICE_ADDR: "currencyservice:7000" -> "currencyservice:7001"
+  da hoan tac F5-frontend-config
+--> h2: DAT
+
+=== twin ===
+  1 pod tre hon 600s (tre nhat frontend-b876f44b6-hgjx2, 12s), cho 592s
+  twin frontend: CURRENCY_SERVICE_ADDR=currencyservice:7001 OTEL_SERVICE_NAME=twin-frontend
+  rollback tren twin: quay ve phien ban 70 (hien tai 71): env CURRENCY_SERVICE_ADDR: "currencyservice:7001" -> "currencyservice:7000"
+  sau rollback: twin=currencyservice:7000 production=currencyservice:7001 OTEL_SERVICE_NAME=twin-frontend
+  da hoan tac F5-frontend-config
+--> twin: DAT
+
+=== h1 ===
+  2 pod tre hon 600s (tre nhat frontend-679b58c764-zgq7g, 13s), cho 592s
+  cho trieu chung on dinh 330s
+  slow_edges: []
+  cpu currencyservice: None
+CONFIGURATION CHANGES (last 10 min; pod template revisions, newest first; replica scaling is not a revision):
+  currencyservice revision 2 (current), 9.5 min ago, from revision 1, cause: not recorded: cpu limit: 200m -> 10m; cpu request: 100m -> 10m
+  da hoan tac F4-currencyservice-cpu
+--> h1: SAI
+
+Cau hinh ve dung luc dau: DAT
+5/6 dat — /home/kltn/XAI-microservices-demo/data/v2_check/20261109-150606_v2_check.json
